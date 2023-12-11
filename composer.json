@@ -1,6 +1,6 @@
 {
-    "name": "luminouslabs/installer",
-    "description": "This is app installer package",
+    "name": "llabs/campaign",
+    "description": "This is app campaign package",
     "type": "composer-plugin",
     "license": "MIT",
     "autoload": {
