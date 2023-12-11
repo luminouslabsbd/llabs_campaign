@@ -13,14 +13,7 @@
             "name": "Ahshanul Haider Tanha"
         }
     ],
-    "extra": {
-        "laravel":{
-            "providers":[
-                "Luminouslabs\\Installer\\Providers\\LuminousLabsServiceProvider"
-            ]
-        }
-    },
-   
+
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
