@@ -1,17 +1,19 @@
 {
-    "name": "llabs/campaign",
-    "description": "This is app campaign package",
+    "name": "llabs/armando_campaign",
+    "description": "This Armando Campaign Module Package . Which By Manage Armando Campaign ",
     "type": "library",
-    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ahshanul haider Tanha",
+            "email": "hasnattanha6@gmail.com"
+        }
+    ],
+    "keywords": ["armando_campaign", "campaign-management", "campaign","armmando-package","llabs"],
+    "require": {},
     "autoload": {
         "psr-4": {
             "App\\": "app/",
             "Luminouslabs\\Installer\\": "src/"
         }
-    },
-    "authors": [
-        {
-            "name": "Ahshanul Haider Tanha"
-        }
-    ]
+    }
 }

@@ -20,8 +20,9 @@ class LuminousLabsServiceProvider extends ServiceProvider
     {
         $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
         $this->loadViewsFrom(__DIR__.'/../Views','luminouslabs');
-        // $this->loadMigrationsFrom(__DIR__.'/database/migrations');
+        $this->publishMigrations();
     }
+
     protected function publishFiles()
     {
         $this->publishes([
@@ -30,7 +31,13 @@ class LuminousLabsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../Views' => base_path('resources/views/luminouslabs/installer'),
         ]);
-
-        
     }
+
+    private function publishMigrations()
+    {
+        $this->publishes([
+            __DIR__.'/../../database/migrations/' => database_path('migrations')
+        ], 'migrations');
+    }
+    
 }

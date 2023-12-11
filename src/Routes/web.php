@@ -27,11 +27,6 @@ Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::']
    
 });
 
-// Route::group(['prefix' => 'admin',  'middleware' => ['admin.auth', 'admin.role:1,2']], function () {
-    
-//     Route::get('campain-setup-index', [CampainController::class, 'getComapin']);
-// });
-
 Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
 
     Route::get('campain-setup-index', [CampainController::class, 'getComapin'])->name('partner.campain.manage');
