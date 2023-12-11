@@ -21,7 +21,8 @@
         }
     },
    
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": "^7.4|^8.0"
     }
