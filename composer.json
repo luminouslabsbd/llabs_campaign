@@ -13,7 +13,16 @@
             "name": "Ahshanul Haider Tanha"
         }
     ],
-
+    "extra": {
+        "component": "package",
+        "frameworks": ["Laravel"],
+        "laravel":{
+            "providers":[
+                "Luminouslabs\\Installer\\Providers\\LuminousLabsServiceProvider"
+            ]
+        }
+    },
+   
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
