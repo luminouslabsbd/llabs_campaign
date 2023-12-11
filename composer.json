@@ -1,0 +1,25 @@
+{
+    "name": "luminouslabs/installer",
+    "description": "This is app installer package",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Luminouslabs\\Installer\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ahshanul Haider Tanha"
+        }
+    ],
+    "extra": {
+        "laravel":{
+            "providers":[
+                "Luminouslabs\\Installer\\Providers\\LuminousLabsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {}
+}
