@@ -18,11 +18,13 @@ use Luminouslabs\Installer\Http\Controllers\CampainController;
 
 Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::'], function () {
 
+    // Member Register & Login API 
     Route::get('test', [LLMemberAuthAPIController::class, 'get']);
     Route::post('register', [LLMemberAuthAPIController::class, 'register'])->name('register')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     Route::post('login', [LLMemberAuthAPIController::class, 'login'])->name('login')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-    // Route::post('logout', [LLMemberAuthAPIController::class, 'logout'])->name('logout')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+    Route::post('get/hash-by-tenantid', [App\Http\Controllers\Api\LinkShareController::class, 'getHashByTenantID']);
+    Route::get('get-whatsapp-link', [App\Http\Controllers\Api\LinkShareController::class, 'whatsappLinkGenerator']);
     
    
 });
