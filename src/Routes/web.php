@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Luminouslabs\Installer\Http\Controllers\Api\LLMemberAuthAPIController;
+use Luminouslabs\Installer\Http\Controllers\Api\LinkShareController;
 use Luminouslabs\Installer\Http\Controllers\CampainController;
 /*
 |--------------------------------------------------------------------------
@@ -23,8 +24,9 @@ Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::']
     Route::post('register', [LLMemberAuthAPIController::class, 'register'])->name('register')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     Route::post('login', [LLMemberAuthAPIController::class, 'login'])->name('login')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-    Route::post('get/hash-by-tenantid', [App\Http\Controllers\Api\LinkShareController::class, 'getHashByTenantID']);
-    Route::get('get-whatsapp-link', [App\Http\Controllers\Api\LinkShareController::class, 'whatsappLinkGenerator']);
+    // WhatsApp Link & QR Code
+    Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
+    Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator']);
     
    
 });
