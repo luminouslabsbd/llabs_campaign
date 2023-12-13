@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Luminouslabs\Installer\Http\Controllers\Api\LLMemberAuthAPIController;
 use Luminouslabs\Installer\Http\Controllers\Api\LinkShareController;
 use Luminouslabs\Installer\Http\Controllers\CampainController;
+use Luminouslabs\Installer\Http\Controllers\RocketChatController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -43,6 +45,17 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'] ,'as
     Route::post('/campain-spiner-remove/{id}', [CampainController::class, 'campain_spiner_id_remove'])->name('partner.campain_spiner_remove');
 
 });
+
+//admin rocket chat setting routes
+Route::group(['prefix' => '{locale}/admin','middleware' => ['web']]  , function () {
+
+    Route::get('rocket-chat-data',[RocketChatController::class,'index'])->name('admin.rocket_chat');
+    Route::get('rocket-chat-data-edit/{id}',[RocketChatController::class,'edit'])->name('admin.rocket_chat.edit');
+    Route::post('rocket-chat-update', [RocketChatController::class ,'storeUpdate'])->name('admin.rocket_chat.update');
+    Route::get('rocket-chat-add',[RocketChatController::class,'add'])->name('admin.rocket_chat.add');
+
+});
+
 
 Route::group(['prefix' => '{locale}/api/ll/v1' ,'as' => 'luminouslabs::' ], function () {
 
