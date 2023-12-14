@@ -5,6 +5,10 @@ use Luminouslabs\Installer\Http\Controllers\Api\LLMemberAuthAPIController;
 use Luminouslabs\Installer\Http\Controllers\Api\LinkShareController;
 use Luminouslabs\Installer\Http\Controllers\CampainController;
 use Luminouslabs\Installer\Http\Controllers\RocketChatController;
+use Luminouslabs\Installer\Http\Controllers\AdminDashBoardController;
+use Luminouslabs\Installer\Http\Controllers\PartnerDashBoardController;
+use Luminouslabs\Installer\Http\Controllers\MemberDashBoardController;
+use Luminouslabs\Installer\Http\Controllers\StaffDashBoardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,15 +67,21 @@ Route::group(['prefix' => '{locale}/api/ll/v1' ,'as' => 'luminouslabs::' ], func
     
 });
 
+// Admin Dashboard Data 
+Route::group(['prefix' => '{locale}/admin/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
+    Route::get('get-dashboard-card-count', [AdminDashBoardController::class, 'getDashboardCardCount'])->name('admin.getDashboardCardCount');
+    Route::get('/seven-days-data',[AdminDashBoardController::class,'getLastSevenDaysData'])->name('admin.getLastSevenDaysData');
+});
 
+// Partner Dashboard Data 
+Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
+    Route::get('get-dashboard-card-count', [PartnerDashBoardController::class, 'getDashboardCardCount'])->name('partner.getDashboardCardCount');
+    // Route::get('/seven-days-data',[PartnerDashBoardController::class,'getLastSevenDaysData'])->name('admin.getLastSevenDaysData');
+});
 
-
-
-// Route::prefix('api/v1/ll')->group(function () {
-
-    // Link Share 
-    // Route::post('get/hash-by-tenantid', [App\Http\Controllers\Api\LinkShareController::class, 'getHashByTenantID']);
-    // Route::get('get-whatsapp-link', [App\Http\Controllers\Api\LinkShareController::class, 'whatsappLinkGenerator']);
-       
-// });
+// Member Dashboard Data 
+Route::group(['prefix' => '{locale}/member/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
+    Route::get('get-dashboard-card-count', [MemberDashBoardController::class, 'getDashboardCardCount'])->name('member.getDashboardCardCount');
+    // Route::get('/seven-days-data',[PartnerDashBoardController::class,'getLastSevenDaysData'])->name('admin.getLastSevenDaysData');
+});
 

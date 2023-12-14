@@ -33,7 +33,7 @@
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Reward Views</h3>
-                <h1 class="font-extrabold text-3xl">{{ $countDatas["rewardViews"] }}</h1>
+                <h1 class="font-extrabold text-3xl">{{ $countDatas['rewardViews'][0]->totalViews }}</h1>
             </div>
 
             <div class="ll-dashboard-info-card">
@@ -48,7 +48,7 @@
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Points</h3>
-                <h1 class="font-extrabold text-3xl">{{ $totalPartners ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl">{{ $countDatas['rewardViews'][0]->totalPoints }}</h1>
             </div>
 
             <div class="ll-dashboard-info-card">
@@ -224,8 +224,8 @@
                         tension: 0.4
                     },
                     {
-                        label: 'Total Partners',
-                        data: [datasetsData.partnersData[0].count, datasetsData.partnersData[1].count, datasetsData.partnersData[2].count, datasetsData.partnersData[3].count, datasetsData.partnersData[4].count, datasetsData.partnersData[5].count, datasetsData.partnersData[6].count],
+                        label: 'Total Points',
+                        data: [datasetsData.pointsData[0].count, datasetsData.pointsData[1].count, datasetsData.pointsData[2].count, datasetsData.pointsData[3].count, datasetsData.pointsData[4].count, datasetsData.pointsData[5].count, datasetsData.pointsData[6].count],
                         borderColor: '#FF6464',
                         backgroundColor: '#FF6464',
                         tension: 0.4
