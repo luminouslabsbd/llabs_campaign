@@ -28,42 +28,42 @@
         <div class="ll-dashboard-info-card-contaienr space-y-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-7 xl:gap-7 md:space-y-0">
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Card Views</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['views'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl CardViews"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Reward Views</h3>
-                <h1 class="font-extrabold text-3xl">{{ $countDatas['rewardViews'][0]->totalViews }}</h1>
+                <h1 class="font-extrabold text-3xl RewardViews"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Points Issued</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['number_of_points_issued'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl PointsIssued"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Rewards Claimed</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['number_of_rewards_redeemed'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl RewardsClaimed"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Points</h3>
-                <h1 class="font-extrabold text-3xl">{{ $countDatas['rewardViews'][0]->totalPoints }}</h1>
+                <h1 class="font-extrabold text-3xl TotalPoints"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Staff</h3>
-                <h1 class="font-extrabold text-3xl">{{ $staffsTotal ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalStaff"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Members</h3>
-                <h1 class="font-extrabold text-3xl">{{ $membersTotal ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalMembers"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Cards</h3>
-                <h1 class="font-extrabold text-3xl">{{ $countDatas["totalCards"] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalCards"></h1>
             </div>
         </div>
 
@@ -270,7 +270,7 @@
         // chart creation end
     
         // create chart
-        createDayChart('{{ route("partner.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
+        createDayChart('{{ route("luminouslabs::partner.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
         
         function createDayChart(routeName, days, canvasSelector) {
             $.ajax({
@@ -285,6 +285,31 @@
                 }
             });
         }
+
+    // Get Count 
+    getPartnerCardCount('{{ route("luminouslabs::partner.getDashboardCardCount") }}');
+
+    function getPartnerCardCount(routeName) {
+        $.ajax({
+            url: routeName,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                $('.CardViews').text(response.cardsSums.views ?? 0); 
+                $('.RewardViews').text(response.countDatas.rewardViews[0].totalViews ?? 0);
+                $('.PointsIssued').text(response.cardsSums.number_of_points_issued ?? 0);
+                $('.RewardsClaimed').text(response.cardsSums.number_of_rewards_redeemed ?? 0);
+                $('.TotalPoints').text(response.countDatas.rewardViews[0].totalPoints ?? 0);
+                $('.TotalStaff').text(response.staffsTotal);
+                $('.TotalMembers').text(response.membersTotal);
+                $('.TotalCards').text(response.countDatas.totalCards);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error: ' + status, error);
+            }
+        });
+    }
+
     
     
     });

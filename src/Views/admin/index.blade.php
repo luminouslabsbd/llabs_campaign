@@ -34,42 +34,42 @@
         <div class="ll-dashboard-info-card-contaienr space-y-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-7 xl:gap-7 md:space-y-0">
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Card Views</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['views'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl CardViews"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Reward Views</h3>
-                <h1 class="font-extrabold text-3xl">{{ $totalRewardViews ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl RewardViews"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Points Issued</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['number_of_points_issued'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl PointsIssued"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Rewards Claimed</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cardsSums['number_of_rewards_redeemed'] ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl RewardsClaimed"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Partners</h3>
-                <h1 class="font-extrabold text-3xl">{{ $totalPartners }}</h1>
+                <h1 class="font-extrabold text-3xl TotalPartners"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Staff</h3>
-                <h1 class="font-extrabold text-3xl">{{ $staffsTotal ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalStaff"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Members</h3>
-                <h1 class="font-extrabold text-3xl">{{ $membersTotal ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalMembers"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Cards</h3>
-                <h1 class="font-extrabold text-3xl">{{ $totalCards ?? 0 }}</h1>
+                <h1 class="font-extrabold text-3xl TotalCards"></h1>
             </div>
         </div>
 
@@ -196,7 +196,7 @@ $(document).ready(function() {
     // chart creation end
 
     // create chart
-    createDayChart('{{ route("admin.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
+    createDayChart('{{ route("luminouslabs::admin.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
 
     function createDayChart(routeName, days, canvasSelector) {
         $.ajax({
@@ -205,6 +205,32 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 createNewChart(canvasSelector, getDates(days), response);
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error: ' + status, error);
+            }
+        });
+    }
+
+    // Get Count 
+    getAdminCardCount('{{ route("luminouslabs::admin.getDashboardCardCount") }}');
+
+    function getAdminCardCount(routeName) {
+        $.ajax({
+            url: routeName,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+
+                $('.CardViews').text(response.cardsSums.views ?? 0); 
+                $('.RewardViews').text(response.totalRewardViews ?? 0);
+                $('.PointsIssued').text(response.cardsSums.number_of_points_issued ?? 0);
+                $('.RewardsClaimed').text(response.cardsSums.number_of_rewards_redeemed ?? 0);
+                $('.TotalPartners').text(response.totalPartners);
+                $('.TotalStaff').text(response.staffsTotal);
+                $('.TotalMembers').text(response.membersTotal);
+                $('.TotalCards').text(response.totalCards);
+                
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error: ' + status, error);

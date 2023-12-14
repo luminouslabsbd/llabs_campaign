@@ -6,20 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-use App\Services\Card\CardService;
 
-class MemberDashBoardController extends Controller
+class StaffDashBoardController extends Controller
 {
-    public function getDashboardCardCount(Request $request,CardService $cardService){
+    public function getDashboardCardCount(Request $request){
 
-        
+        $authId = auth('staff')->user()->id;
+        // Retrieve the table data for the data definition
+        $totalMember = DB::table('transactions')->where('staff_id',$authId)->select('id')->count();
        
         return response()->json([
             'status' => 200,
-            
-
+            'totalMember' => $totalMember
         ]);
 
     }

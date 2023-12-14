@@ -76,12 +76,17 @@ Route::group(['prefix' => '{locale}/admin/ll/v1', 'middleware' => ['web'] ,'as' 
 // Partner Dashboard Data 
 Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
     Route::get('get-dashboard-card-count', [PartnerDashBoardController::class, 'getDashboardCardCount'])->name('partner.getDashboardCardCount');
-    // Route::get('/seven-days-data',[PartnerDashBoardController::class,'getLastSevenDaysData'])->name('admin.getLastSevenDaysData');
+    Route::get('/seven-days-data',[PartnerDashBoardController::class,'getLastSevenDaysData'])->name('partner.getLastSevenDaysData');
 });
 
 // Member Dashboard Data 
 Route::group(['prefix' => '{locale}/member/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
     Route::get('get-dashboard-card-count', [MemberDashBoardController::class, 'getDashboardCardCount'])->name('member.getDashboardCardCount');
     // Route::get('/seven-days-data',[PartnerDashBoardController::class,'getLastSevenDaysData'])->name('admin.getLastSevenDaysData');
+});
+
+// Staff 
+Route::group(['prefix' => '{locale}/staff/ll/v1', 'middleware' => ['web'] ,'as' => 'luminouslabs::' ], function () {
+    Route::get('get-dashboard-card-count', [StaffDashBoardController::class, 'getDashboardCardCount'])->name('staff.getDashboardCardCount');
 });
 

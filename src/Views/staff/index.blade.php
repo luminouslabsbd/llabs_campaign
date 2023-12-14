@@ -28,9 +28,32 @@
         <div class="ll-dashboard-info-card-contaienr space-y-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-7 xl:gap-7 md:space-y-0">
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Members</h3>
-                <h1 class="font-extrabold text-3xl">{{ $totalMember }}</h1>
+                <h1 class="font-extrabold text-3xl totalMember"></h1>
             </div>
         </div>
     </div>
 </section>
+<script>
+    $(document).ready(function() {
+        // Get Count 
+        getAdminCardCount('{{ route("luminouslabs::staff.getDashboardCardCount") }}');
+
+        function getAdminCardCount(routeName) {
+            $.ajax({
+                url: routeName,
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    console.log(response);
+                    $('.totalMember').text(response.totalMember ?? 0);
+                    
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error: ' + status, error);
+                }
+            });
+        }
+    });
+
+</script>
 @stop
