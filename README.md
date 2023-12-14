@@ -17,6 +17,15 @@ Luminouslabs\Installer\Providers\LuminousLabsServiceProvider::class
 
 ```
 
+Import css path in `resources/css/app.css`.
+
+@import url('/public/luminouslabs/css/ll_style.css');
+
+```
+Luminouslabs\Installer\Providers\LuminousLabsServiceProvider::class
+
+```
+
 Publish migrations:
 
 ```
@@ -32,15 +41,36 @@ php artisan migrate
 ```
 
 <a name=sidebar></a>
-## Editing & Update the Patner Defult Blade File
+## Change View File Return You New Theme
 
-The template for the sidebar is located at `resources/ll_views/partner/layouts/default.blade.php`. Modify this file to your heart's content. 
+The path  located at `config/view.php`. Modify this file to your heart's content. 
 This HTML code add after Account Setting menu.
 
 ```
+'paths' => [
+    resource_path('views/luminouslabs/installer'),
+],
 
-<li>
-    <a class="ll-sidebar-link flex items-center p-2 group" href="{{ route('luminouslabs::partner.campain.manage') }}"><x-ui.icon icon="user-circle" class="" /><span class="ml-2">Campaign</span></a>
-</li>
+```
+
+
+<a name=sidebar></a>
+## Update You Build File 
+
+If project have node module
+
+```
+nmp run build
+
+```
+
+<a name=sidebar></a>
+## Update You Build File 
+
+If you do not have Node modules installed in your project: 
+
+```
+nmp -i 
+npm run build
 
 ```
