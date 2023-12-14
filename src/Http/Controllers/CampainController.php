@@ -209,6 +209,7 @@ class CampainController extends Controller
                 'unit_price_for_coupon' => $groupedItems->first()->unit_price_for_coupon,
                 'unit_price_for_point' => $groupedItems->first()->unit_price_for_point,
                 'coupon' => $groupedItems->first()->coupon,
+                'campain_code' => $groupedItems->first()->campain_code,
 
                 'spiner' => $groupedItems->map(function ($item) {
                     return [

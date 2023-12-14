@@ -200,6 +200,28 @@
                             >
                         </div>
 
+                        <div class="ll-checkbox">
+                            <span class="label-title">Campaign Type Setting</span>
+                            <input {{ ($result != null && $result['price_check'] == 'only_prize') ? 'checked' : '' }} type="radio" id="price_check" name="campaign_type" value="only_prize">
+                            <label for="price_check">Only Prize</label><br>
+                            <input {{  ($result != null && $result['point_check'] == 'prize_and_point') ? 'checked' : '' }} type="radio" id="point_check" name="campaign_type" value="prize_and_point">
+                            <label for="point_check">Prize & Point</label><br>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="coupon" class="input-label">Campaign Code </label>
+                            <input 
+                                type="text" 
+                                id="campain_code" 
+                                name="campain_code" 
+                                readonly
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                                placeholder=""
+                                value="{{  $result != null ? $result['campain_code'] : '' }}"
+                                x-bind:type="input"
+                            >
+                        </div>
+
                             
                         
                         <div class="ll-checkbox">
