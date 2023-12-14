@@ -28,12 +28,12 @@
         <div class="ll-dashboard-info-card-contaienr space-y-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-7 xl:gap-7 md:space-y-0">
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Followed Cards</h3>
-                <h1 class="font-extrabold text-3xl">{{ $followedCards->count() }}</h1>
+                <h1 class="font-extrabold text-3xl TotalFollowedCards"></h1>
             </div>
 
             <div class="ll-dashboard-info-card">
                 <h3 class="font-semibold mb-3">Total Transactions Cards</h3>
-                <h1 class="font-extrabold text-3xl">{{ $cards->count() }}</h1>
+                <h1 class="font-extrabold text-3xl TotalTransactionsCards"></h1>
             </div>
         </div>
 
@@ -118,7 +118,7 @@
         // chart creation end
     
         // create chart
-        createDayChart('{{ route("member.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
+        createDayChart('{{ route("luminouslabs::member.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
         
         function createDayChart(routeName, days, canvasSelector) {
             $.ajax({
@@ -127,6 +127,26 @@
                 dataType: 'json',
                 success: function(response) {
                     createNewChart(canvasSelector, getDates(days), response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error: ' + status, error);
+                }
+            });
+        }
+
+        // Get Count 
+        getAdminCardCount('{{ route("luminouslabs::member.getDashboardCardCount") }}');
+
+        function getAdminCardCount(routeName) {
+            $.ajax({
+                url: routeName,
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    console.log(response);
+                    $('.TotalFollowedCards').text(response.followedCards ?? 0);
+                    $('.TotalTransactionsCards').text(response.cards ?? 0);
+                    
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error: ' + status, error);
