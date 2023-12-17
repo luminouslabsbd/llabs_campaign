@@ -2,6 +2,7 @@
     "name": "llabs/armando_campaign",
     "description": "This Armando Campaign Module Package . Which By Manage Armando Campaign ",
     "type": "library",
+    "license": "MIT",
     "authors": [
         {
             "name": "Ahshanul haider Tanha",
