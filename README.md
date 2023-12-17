@@ -24,6 +24,10 @@ Import css path in `resources/css/app.css`.
 @import url('/public/luminouslabs/css/ll_style.css');
 
 ```
+Import the class app.php
+
+```
+
 Luminouslabs\Installer\Providers\LuminousLabsServiceProvider::class
 
 ```
