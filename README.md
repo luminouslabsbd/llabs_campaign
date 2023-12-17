@@ -19,6 +19,8 @@ Luminouslabs\Installer\Providers\LuminousLabsServiceProvider::class
 
 Import css path in `resources/css/app.css`.
 
+```
+
 @import url('/public/luminouslabs/css/ll_style.css');
 
 ```
