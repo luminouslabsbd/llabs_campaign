@@ -272,6 +272,10 @@ $routeDataDefinition = (isset($dataDefinition)) ? $dataDefinition->name : null;
                                 </li>
 
                                 <li>
+                                    <a class="ll-sidebar-link flex items-center p-2 group @if (Str::startsWith($routeName, 'luminouslabs::partner.campain.manage')) active @endif" href="{{ route('luminouslabs::partner.campain.manage') }}"><x-ui.icon icon="pencil-square" class="" /><span class="ml-2">Campaign Manage</span></a>
+                                </li>
+
+                                <li>
                                     <a class="ll-sidebar-link flex items-center p-2 group @if ($routeDataDefinition == 'account') active @endif" href="{{ route('partner.data.list', ['name' => 'account']) }}"><x-ui.icon icon="user-circle" class="" /><span class="ml-2">{{ trans('common.account_settings') }}</span></a>
                                 </li>
 

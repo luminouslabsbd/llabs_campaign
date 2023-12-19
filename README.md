@@ -66,7 +66,7 @@ This HTML code add after Account Setting menu.
 If project have node module
 
 ```
-nmp run build
+npm run build
 
 ```
 
@@ -76,7 +76,7 @@ nmp run build
 If you do not have Node modules installed in your project: 
 
 ```
-nmp -i 
+npm -i 
 npm run build
 
 ```
