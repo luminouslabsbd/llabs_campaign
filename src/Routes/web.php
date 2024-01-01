@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Luminouslabs\Installer\Http\Controllers\AdminDashBoardController;
+use Luminouslabs\Installer\Http\Controllers\Api\LinkShareController;
 use Luminouslabs\Installer\Http\Controllers\Api\LLMemberAuthAPIController;
+use Luminouslabs\Installer\Http\Controllers\Api\MemberSpinHandlerController;
 use Luminouslabs\Installer\Http\Controllers\CampainController;
 use Luminouslabs\Installer\Http\Controllers\MemberDashBoardController;
 use Luminouslabs\Installer\Http\Controllers\PartnerDashBoardController;
@@ -28,11 +30,11 @@ Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::']
     Route::post('login', [LLMemberAuthAPIController::class, 'login'])->name('login')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // Link Share
-    Route::post('get/hash-by-tenantid', [App\Http\Controllers\Api\LinkShareController::class, 'getHashByTenantID']);
-    Route::get('get-whatsapp-link', [App\Http\Controllers\Api\LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
+    Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
+    Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
 
 //Member spinner Api's
-    Route::post('get/spinned-rewards', [App\Http\Controllers\Api\MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
+    Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
 
 });
 

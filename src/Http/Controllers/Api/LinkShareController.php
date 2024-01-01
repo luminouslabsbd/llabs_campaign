@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace Luminouslabs\Installer\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -143,9 +143,12 @@ class LinkShareController extends Controller
 
     public function hashDataStore($mainArray, $hash, $path)
     {
-
         if ($hash && $path) {
             $data = [
+                'tenant_id' => $mainArray->TenantID,
+                'campaign_id' => $mainArray->CampaignID,
+                'product_id' => $mainArray->ProductID,
+                'purchase_value' => $mainArray->PurchaseValue,
                 'hash' => $hash,
                 'qr_code_path' => $path,
             ];
@@ -195,6 +198,9 @@ class LinkShareController extends Controller
         $rawData = $request->getContent();
         // Decode the raw JSON data
         $requestData = json_decode($rawData, true);
+        // $dataFromQR = json_decode(Crypt::decrypt($requestData['hash']));
+
+        // return response()->json($dataFromQR, 422);
 
         $validator = validator($requestData, [
             'hash' => 'required',
@@ -208,7 +214,7 @@ class LinkShareController extends Controller
                 'message' => 'Validation error.',
                 'errors' => $validator->errors(),
             ];
-            return response()->json($errorResponse, 422); // Use a 422 status code for unprocessable entity
+            return response()->json($errorResponse, 422);
         }
 
         $encryptedData = $requestData['hash'];
@@ -217,7 +223,19 @@ class LinkShareController extends Controller
 
         if ($getData != null) {
             $dataFromQR = json_decode(Crypt::decrypt($encryptedData));
+
             $labels = DB::table('spiner_data')->where('cam_id', $dataFromQR->CampaignID)->get()->pluck('label_title')->toArray();
+            $point = DB::table('campaigns')->where('id', $dataFromQR->CampaignID)->get()->pluck('unit_price_for_point');
+            $available_spin = round(intval($dataFromQR->PurchaseValue) / intval($point[0]));
+
+            //Insert spinner count, how much time a user could spin and remaining spin
+            DB::table('member_spinner_count')->insert([
+                'campaign_id' => $dataFromQR->CampaignID,
+                'member_id' => Auth::id(),
+                'total_spin' => $available_spin,
+                'remaining_spin' => $available_spin,
+            ]);
+
             // Get the currently authenticated user
             $user = Auth::user();
             // Get the username
@@ -233,12 +251,15 @@ class LinkShareController extends Controller
                 'path' => $getData->qr_code_path ?? '',
                 'number' => $requestData['phone'],
             ];
+
             return response()->json($response, 200);
         }
 
         $makeQrPath = $this->makeQRCode($requestData, $encryptedData);
 
-        $isInserted = $this->hashDataStore($requestData, $encryptedData, $makeQrPath);
+        $dataFromQR = json_decode(Crypt::decrypt($encryptedData));
+
+        $isInserted = $this->hashDataStore($dataFromQR, $encryptedData, $makeQrPath);
 
         if ($requestData['phone'] && $requestData['hash']) {
 
