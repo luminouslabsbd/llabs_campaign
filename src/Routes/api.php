@@ -22,11 +22,11 @@ Route::prefix('{locale}/v1/ll')->group(function () {
         Route::post('register', [LLMemberAuthController::class, 'register']);
 
     });
-// Link Share
+    // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
     Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
 
-//Member spinner Api's
+    //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
 
 });

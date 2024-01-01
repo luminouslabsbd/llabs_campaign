@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
-class LLMemberAuthAPIController extends Controller
+class LLMemberAuthController extends Controller
 {
     public function get()
     {
