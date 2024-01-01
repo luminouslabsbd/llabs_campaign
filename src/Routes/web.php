@@ -29,11 +29,11 @@ Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::']
     Route::post('register', [LLMemberAuthAPIController::class, 'register'])->name('register')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
     Route::post('login', [LLMemberAuthAPIController::class, 'login'])->name('login')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-// Link Share
+    // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
     Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
 
-//Member spinner Api's
+    //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
 
 });

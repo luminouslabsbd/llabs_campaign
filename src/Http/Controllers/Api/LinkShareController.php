@@ -16,6 +16,7 @@ class LinkShareController extends Controller
 
     public function getHashByTenantID(Request $request)
     {
+
         try {
             // Get the raw content from the request
             $rawData = $request->getContent();
@@ -26,11 +27,13 @@ class LinkShareController extends Controller
             // Create a hash using Crift encrypt
 
             // Validate request inputs
-            $validator = validator($requestData, [
+            $validator = Validator::make($requestData, [
                 'TenantID' => 'required',
                 'CampaignID' => 'required',
                 'ProductID' => 'required',
                 'PurchaseValue' => 'required',
+                'email' => 'required|email',
+                'is_login' => 'required|boolean',
             ]);
 
             if ($validator->fails()) {
@@ -90,7 +93,6 @@ class LinkShareController extends Controller
             // Assuming $hash contains the encrypted string
             $decodedData = json_decode(Crypt::decrypt($hash));
 
-// Ensure $decodedData is an object
             if (is_object($decodedData)) {
                 // Get data as an array
                 $codeContents = json_decode(json_encode($decodedData), true);
@@ -105,10 +107,8 @@ class LinkShareController extends Controller
             foreach ($spinnerData as $key => $value) {
                 $labels[] = $value->label_title;
             }
-// Get the currently authenticated user
-            $user = Auth::user();
 
-// Get the username
+            $user = Auth::user();
             $username = $user->name;
 
             $newObj = [
@@ -143,12 +143,13 @@ class LinkShareController extends Controller
 
     public function hashDataStore($mainArray, $hash, $path)
     {
+
         if ($hash && $path) {
             $data = [
-                'tenant_id' => $mainArray->TenantID,
-                'campaign_id' => $mainArray->CampaignID,
-                'product_id' => $mainArray->ProductID,
-                'purchase_value' => $mainArray->PurchaseValue,
+                // 'tenant_id' => $mainArray['TenantID'],
+                // 'campaign_id' => $mainArray['CampaignID'],
+                // 'product_id' => $mainArray['ProductID'],
+                // 'purchase_value' => $mainArray['PurchaseValue'],
                 'hash' => $hash,
                 'qr_code_path' => $path,
             ];
@@ -159,9 +160,9 @@ class LinkShareController extends Controller
         }
     }
 
-    //This func will return data on scan QR code
     public function getHashUrl($requestData, $hash)
     {
+        // return response()->json('ok');
         $getData = DB::table('hash_qr_code')->where('hash', $hash)->select('qr_code_path')->first();
 
         if ($getData != null) {
@@ -185,12 +186,6 @@ class LinkShareController extends Controller
             return $response;
         }
 
-        // if ($hash && $requestData['phone']) {
-
-        //     $link = 'https://wa.me/' . $requestData['phone'];
-        //     $link .= '?text=' . urlencode($hash);
-        //     return $link;
-        // }
     }
 
     public function whatsappLinkGenerator(Request $request)
