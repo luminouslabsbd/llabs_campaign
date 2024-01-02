@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Luminouslabs\Installer\Http\Controllers\Api\LinkShareController;
+use Luminouslabs\Installer\Http\Controllers\Api\LLMemberAuthController;
 use Luminouslabs\Installer\Http\Controllers\Api\MemberSpinHandlerController;
 
 /*

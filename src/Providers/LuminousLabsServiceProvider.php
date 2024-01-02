@@ -20,6 +20,10 @@ class LuminousLabsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->publishes([
+            __DIR__ . '/../Helpers' => app_path('Helpers'),
+        ], 'helpers');
+
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/api.php');
         Route::prefix('api')
@@ -38,12 +42,13 @@ class LuminousLabsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../Views' => base_path('resources/views/luminouslabs/installer'),
         ]);
+
     }
 
     private function publishMigrations()
     {
         $this->publishes([
-            __DIR__ . '/../../database/migrations/' => database_path('migrations'),
+            __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'migrations');
     }
 

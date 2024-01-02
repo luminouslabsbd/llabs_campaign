@@ -140,6 +140,7 @@ class LinkShareController extends Controller
 
             return $fullQRCodeUrl;
         }
+
     }
 
     public function hashDataStore($mainArray, $hash, $path)
@@ -225,7 +226,8 @@ class LinkShareController extends Controller
             $available_spin = round(intval($dataFromQR->PurchaseValue) / intval($point[0]));
 
             //Insert spinner count, how much time a user could spin and remaining spin
-            DB::table('member_spinner_count')->insert([
+
+            DB::table('member_spinner_count')->updateOrInsert([
                 'campaign_id' => $dataFromQR->CampaignID,
                 'member_id' => Auth::id(),
                 'total_spin' => $available_spin,

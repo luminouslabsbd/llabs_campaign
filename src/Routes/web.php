@@ -19,22 +19,6 @@ use Luminouslabs\Installer\Http\Controllers\StaffDashBoardController;
 |
  */
 
-// Route::group(['prefix' => '{locale}/ll/api/member/v1', 'as' => 'luminouslabs::'], function () {
-
-//     // Member Register & Login API
-//     Route::get('test', [LLMemberAuthAPIController::class, 'get']);
-//     Route::post('register', [LLMemberAuthAPIController::class, 'register'])->name('register')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-//     Route::post('login', [LLMemberAuthAPIController::class, 'login'])->name('login')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-
-//     // Link Share
-//     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
-//     Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
-
-//     //Member spinner Api's
-//     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
-
-// });
-
 Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as' => 'luminouslabs::'], function () {
 
     Route::get('campain-setup-index', [CampainController::class, 'getComapin'])->name('partner.campain.manage');
