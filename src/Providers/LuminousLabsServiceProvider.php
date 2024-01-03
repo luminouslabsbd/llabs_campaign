@@ -20,9 +20,9 @@ class LuminousLabsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->publishes([
-            __DIR__ . '/../Helpers' => app_path('Helpers'),
-        ], 'helpers');
+        // $this->publishes([
+        //     __DIR__ . '/../Helpers' => app_path('Helpers'),
+        // ], 'helpers');
 
         $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
         $this->loadRoutesFrom(__DIR__ . '/../Routes/api.php');
