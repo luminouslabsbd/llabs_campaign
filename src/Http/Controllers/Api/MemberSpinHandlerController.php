@@ -23,27 +23,47 @@ class MemberSpinHandlerController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $e = member(['campaigns'])->campaigns()->attach($request['campaign_id'], [
-            // 'member_id' => Auth::id(),
-            'spinner_round' => $request['spinner_round'],
-            'rewards' => json_encode($request['rewards']),
-        ]);
+        DB::beginTransaction();
 
-        $spin = DB::table('member_spinner_count')
-            ->where([
-                'campaign_id' => $request['campaign_id'],
-            ])
-            ->first();
+        try {
+            // Attach campaign to member with specified data
+            $member = member(['campaigns']);
+            $e = $member->campaigns()->attach($request['campaign_id'], [
+                'spinner_round' => $request['spinner_round'],
+                'rewards' => json_encode($request['rewards']),
+            ]);
 
-        if ($spin) {
-            DB::table('member_spinner_count')
+            // Update spinner counts
+            $spin = DB::table('member_spinner_count')
+                ->where('member_id', Auth::id())
                 ->where('campaign_id', $request['campaign_id'])
-                ->update([
-                    'total_spin' => $spin->total_spin - 1,
-                    'remaining_spin' => $spin->remaining_spin - 1,
-                ]);
+                ->first();
+            if ($spin) {
+                DB::table('member_spinner_count')
+                    ->where('member_id', Auth::id())
+                    ->where('campaign_id', $request['campaign_id'])
+                    ->update([
+                        'remaining_spin' => $spin->remaining_spin - 1,
+                    ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                "message" => "Spin round data successfully processed.",
+                "status" => 200,
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Something went wrong, rollback the transaction
+            DB::rollback();
+
+            // Handle the exception as needed
+            return response()->json([
+                "error" => "An error occurred while processing the spin round data.",
+                "status" => 202,
+            ], 202);
         }
 
-        return response()->json('Spin round data successfully processed.', 200);
     }
 }
