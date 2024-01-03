@@ -5,6 +5,7 @@ namespace Luminouslabs\Installer\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -17,11 +18,17 @@ class MemberSpinHandlerController extends Controller
             'campaign_id' => 'required|integer',
             'spinner_round' => 'required|integer',
             'rewards' => 'required|array',
+            'bearer-token' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        // Set the Bearer token in the request header
+        request()->headers->set('Authorization', 'Bearer ' . $request['bearer-token']);
+
+        // Attempt to authenticate the user using the 'member_api' guard
+        $user = Auth::guard('member_api')->user();
 
         DB::beginTransaction();
 

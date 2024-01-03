@@ -25,7 +25,7 @@ Route::prefix('{locale}/v1/ll')->group(function () {
     });
     // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
-    Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator'])->middleware('auth:member_api');
+    Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator']);
 
     //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');

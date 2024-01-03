@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 class LinkShareController extends Controller
 {
 
+    //Will generate a hash
     public function getHashByTenantID(Request $request)
     {
 
@@ -23,6 +24,13 @@ class LinkShareController extends Controller
             $rawData = $request->getContent();
             // Decode the raw JSON data
             $requestData = json_decode($rawData, true);
+
+            //Make the user authenticate and get a auth token for further proceed.
+            $user = DB::table('members')->where('email', $request['email'])->first();
+            $authenticatedUser = Auth::loginUsingId($user->id);
+            $accessToken = $authenticatedUser->createToken('token-for-spin');
+            $requestData['access-token'] = $accessToken->plainTextToken;
+
             // Convert the associative array to a JSON string
             $jsonString = json_encode($requestData);
             // Create a hash using Crift encrypt
@@ -46,6 +54,7 @@ class LinkShareController extends Controller
                 ];
                 return response()->json($errorResponse, 422); // Use a 422 status code for unprocessable entity
             }
+
             $encryptedData = Crypt::encrypt($jsonString);
 
             // $decryptedData = Crypt::decrypt($encryptedData);
@@ -75,7 +84,7 @@ class LinkShareController extends Controller
 
     public function makeQRCode($jsonString, $hash)
     {
-
+        // return response()->json($jsonString, 200);
         // Check if the data already exists
         $existingQRCode = DB::table('hash_qr_code')->where('hash', $hash)->first();
         if (isset($existingQRCode)) {
@@ -108,12 +117,11 @@ class LinkShareController extends Controller
             foreach ($spinnerData as $key => $value) {
                 $labels[] = $value->label_title;
             }
-
-            $user = Auth::user();
-            $username = $user->name;
+            // $user = DB::table('members')->where('email', $res);
+            // $username = $user->name;
 
             $newObj = [
-                'username' => $username,
+                // 'username' => $username,
                 'spin_options' => $labels,
                 'campaign_name' => $campaign->name,
             ];
@@ -164,22 +172,14 @@ class LinkShareController extends Controller
 
     public function getHashUrl($requestData, $hash)
     {
-        // return response()->json('ok');
         $getData = DB::table('hash_qr_code')->where('hash', $hash)->select('qr_code_path')->first();
 
         if ($getData != null) {
             $dataFromQR = json_decode(Crypt::decrypt($hash));
             $labels = DB::table('spiner_data')->where('cam_id', $dataFromQR->CampaignID)->get()->pluck('label_title')->toArray();
-            // Get the currently authenticated user
-            $user = Auth::user();
-            // Get the username
-            $username = $user->name;
-            // Get the access token for the user (if using Passport)
-            // $accessToken = $user->createToken('token-for-spin');
+
             $response = [
                 'spin_options' => $labels,
-                // 'auth_token' => $accessToken->plainTextToken,
-                'username' => $username,
                 'status' => 200,
                 'hash' => $hash,
                 'path' => $getData->qr_code_path ?? '',
@@ -226,23 +226,19 @@ class LinkShareController extends Controller
             $available_spin = round(intval($dataFromQR->PurchaseValue) / intval($point[0]));
 
             //Insert spinner count, how much time a user could spin and remaining spin
-
+            $user = DB::table('members')->where('email', $dataFromQR->email)->first();
             DB::table('member_spinner_count')->updateOrInsert([
                 'campaign_id' => $dataFromQR->CampaignID,
-                'member_id' => Auth::id(),
+                'member_id' => $user->id,
                 'total_spin' => $available_spin,
                 'remaining_spin' => $available_spin,
             ]);
 
-            // Get the currently authenticated user
-            $user = Auth::user();
             // Get the username
             $username = $user->name;
             // Get the access token for the user (if using Passport)
-            $accessToken = $user->createToken('token-for-spin');
             $response = [
                 'spin_options' => $labels,
-                'auth_token' => $accessToken->plainTextToken,
                 'username' => $username,
                 'status' => 200,
                 'hash' => $encryptedData,
@@ -262,16 +258,6 @@ class LinkShareController extends Controller
         if ($requestData['phone'] && $requestData['hash']) {
 
             $getData = DB::table('hash_qr_code')->where('hash', $requestData['hash'])->first();
-
-            // if ($getData != null) {
-            //     $path = $getData->qr_code_path;
-            // }
-
-            // $link = 'https://wa.me/' . $requestData['phone'];
-
-            // if ($requestData['hash']) {
-            //     $link .= '?text=Hello! I want to go for the prize!! Here is my coupon: ' . urlencode($requestData['hash']);
-            // }
 
             if (!$getData) {
                 $response = [
