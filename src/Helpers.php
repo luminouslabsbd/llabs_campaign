@@ -1,6 +1,4 @@
 <?php
-
-// use App\Models\Member;
 use Illuminate\Support\Facades\Auth;
 use Luminouslabs\Installer\Models\Member;
 

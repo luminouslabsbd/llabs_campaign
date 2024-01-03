@@ -11,9 +11,11 @@
     ],
     "keywords": ["armando_campaign", "campaign-management", "campaign","armmando-package","llabs"],
     "require": {
-        "browner12/helpers": "^3.5"
     },
     "autoload": {
+            "files": [
+        "src/Helpers.php"
+    ],
         "psr-4": {
             "App\\": "app/",
             "Luminouslabs\\Installer\\": "src/"
