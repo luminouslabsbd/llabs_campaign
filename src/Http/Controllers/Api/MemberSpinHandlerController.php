@@ -3,81 +3,73 @@
 namespace Luminouslabs\Installer\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-// use App\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Luminouslabs\Installer\Models\Member;
 
 class MemberSpinHandlerController extends Controller
 {
     // This will run when member will spin once.
     public function gotSpinned(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'campaign_id' => 'required|integer',
-            'spinner_round' => 'required|integer',
-            'rewards' => 'required|array',
-            'bearer-token' => 'required',
+            'rewards' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        // Set the Bearer token in the request header
-        request()->headers->set('Authorization', 'Bearer ' . $request['bearer-token']);
-
-        // Attempt to authenticate the user using the 'member_api' guard
-        $user = Auth::guard('member_api')->user();
-
-        if ($user) {
+        try {
             DB::beginTransaction();
-            try {
-                // Attach campaign to member with specified data
-                $member = Member::with(['campaigns'])->findOrFail($user->id);
-                $e = $member->campaigns()->attach($request['campaign_id'], [
-                    'spinner_round' => $request['spinner_round'],
-                    'rewards' => json_encode($request['rewards']),
-                ]);
+            // $spin = DB::table('member_spinner_count')
+            //     ->where([
+            //         'member_id' => Auth::id(),
+            //         'campaign_id' => $request['campaign_id'],
+            //     ])
+            //     ->first();
+            $spinner_count = DB::table('member_spinner_count')
+                ->where('campaign_id', $request['campaign_id'])
+                ->where('member_id', Auth::id())->first();
 
-                // Update spinner counts
-                $spin = DB::table('member_spinner_count')
-                    ->where('member_id', Auth::id())
-                    ->where('campaign_id', $request['campaign_id'])
-                    ->first();
-                if ($spin) {
+            if ($spinner_count->remaining_spin > 0) {
+                $spinner_round = $spinner_count->total_spin - $spinner_count->remaining_spin;
+
+                if ($spinner_count) {
+                    // Make modifications
+                    $spinner_count->remaining_spin = $spinner_count->remaining_spin - 1;
+
+                    // Save the changes
                     DB::table('member_spinner_count')
-                        ->where('member_id', Auth::id())
                         ->where('campaign_id', $request['campaign_id'])
+                        ->where('member_id', Auth::id())
                         ->update([
-                            'remaining_spin' => $spin->remaining_spin - 1,
+                            'remaining_spin' => $spinner_count->remaining_spin,
                         ]);
                 }
 
-                DB::commit();
-
-                return response()->json([
-                    "message" => "Spin round data successfully processed.",
-                    "status" => 200,
-                ], 200);
-
-            } catch (\Exception $e) {
-                dd($e);
-                // Something went wrong, rollback the transaction
-                DB::rollback();
-
-                // Handle the exception as needed
-                return response()->json([
-                    "error" => "An error occurred while processing the spin round data.",
-                    "status" => 202,
-                ], 202);
+                if (isset($spinner_count)) {
+                    //Attach all rewards for the member for specific campaign
+                    $e = member(['campaigns'])->campaigns()->attach($request['campaign_id'], [
+                        'rewards' => $request['rewards'],
+                        'spinner_round' => $spinner_round,
+                    ]);
+                    DB::commit();
+                    return response()->json([
+                        'message' => 'Spin round data successfully processed.',
+                        'status' => 200
+                    ], 200);
+                } else {
+                    return response()->json('Something went wrong.', 404);
+                }
+            } else {
+                return response()->json(['message' => 'No available spin'], 404);
             }
-
-        } else {
-            // Token is not valid or user is not authenticated
-            return response()->json(['message' => 'Token verification failed'], 401);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            //throw $th;
         }
-
     }
 }

@@ -21,13 +21,13 @@ Route::prefix('{locale}/v1/ll')->group(function () {
 
         Route::post('login', [LLMemberAuthController::class, 'login']);
         Route::post('register', [LLMemberAuthController::class, 'register']);
-
     });
     // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
-    Route::get('get-whatsapp-link', [LinkShareController::class, 'whatsappLinkGenerator']);
+    Route::get('get-whatsapp-link', [LinkShareController::class, 'QrGenerator']);
+    //Get all data after scan
+    Route::get('scaned/{hash_id}', [LinkShareController::class, 'QrCodeScaned'])->name('qr-scaned');
 
     //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
-
 });

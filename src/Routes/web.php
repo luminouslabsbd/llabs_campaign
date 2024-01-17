@@ -29,7 +29,6 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as
     Route::get('/campain-view/{id}', [CampainController::class, 'view'])->name('partner.campain.view');
     Route::post('/campain-delete/{id}', [CampainController::class, 'delete'])->name('partner.campain.delete');
     Route::post('/campain-spiner-remove/{id}', [CampainController::class, 'campain_spiner_id_remove'])->name('partner.campain_spiner_remove');
-
 });
 
 //admin rocket chat setting routes
@@ -39,13 +38,11 @@ Route::group(['prefix' => '{locale}/admin', 'middleware' => ['web']], function (
     Route::get('rocket-chat-data-edit/{id}', [RocketChatController::class, 'edit'])->name('admin.rocket_chat.edit');
     Route::post('rocket-chat-update', [RocketChatController::class, 'storeUpdate'])->name('admin.rocket_chat.update');
     Route::get('rocket-chat-add', [RocketChatController::class, 'add'])->name('admin.rocket_chat.add');
-
 });
 
 Route::group(['prefix' => '{locale}/api/ll/v1', 'as' => 'luminouslabs::'], function () {
 
     Route::get('get-campain-spiner-data', [CampainController::class, 'getSpinarData']);
-
 });
 
 // Admin Dashboard Data
