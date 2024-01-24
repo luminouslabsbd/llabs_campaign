@@ -18,7 +18,6 @@ class LinkShareController extends Controller
 
     public function getHashByTenantID(Request $request)
     {
-
         try {
             // Get the raw content from the request
             $rawData = $request->getContent();
@@ -50,9 +49,9 @@ class LinkShareController extends Controller
                 return response()->json($errorResponse, 422); // Use a 422 status code for unprocessable entity
             }
 
-            $u = DB::table('members')->where('email', $requestData['email'])->first();
-            if ($u) {
-                $user = Auth::loginUsingId($u->id);
+            $member = DB::table('members')->where('email', $requestData['email'])->first();
+            if ($member) {
+                $user = Auth::loginUsingId($member->id);
                 $encryptedData = Crypt::encrypt($jsonString);
 
                 if ($encryptedData) {
@@ -82,6 +81,7 @@ class LinkShareController extends Controller
     {
         // Check if the data already exists
         $existingQRCode = DB::table('hash_qr_code')->find($id);
+
         if ($existingQRCode) {
             $decodedData = json_decode(Crypt::decrypt($existingQRCode->hash));
             if (is_object($decodedData)) {
@@ -93,24 +93,122 @@ class LinkShareController extends Controller
             }
 
             $spinnerData = DB::table('spiner_data')->where('cam_id', $codeContents['CampaignID'])->get();
-            $campaign = DB::table('campaigns')->find($codeContents['CampaignID']);
 
+            $campaign = DB::table('campaigns')->find($codeContents['CampaignID']);
+            $labels = [];
+            $colors = [];
+            $is_wining_label = [];
             foreach ($spinnerData as $key => $value) {
+                if ($value->is_wining_label === 1) {
+                    $winingLabels[] = $value->label_title;
+                } else {
+                    $loseingLabels[] = $value->label_title;
+                }
                 $labels[] = $value->label_title;
+                $colors[] = $value->label_color;
+                $is_wining_label[] = $value->is_wining_label;
             }
 
-            $u = DB::table('members')->where('email', $decodedData->email)->first();
-            if ($u) {
-                $user = Auth::loginUsingId($u->id);
+            $arrC = array_count_values($is_wining_label);
+            $numberOfZeros = $arrC[0]; //Number of false values
+            $numberOfOnes = $arrC[1]; //Number of true values
+
+            $winPercentage = round(100 / count($is_wining_label) * $numberOfOnes);
+            $winningPercentage = $winPercentage;
+            $losingPercentage = 100 - $winningPercentage;
+
+            // Calculate the number of winning and losing labels based on percentages
+            $numberOfWinningLabels = count($winingLabels);
+            $numberOfLosingLabels = count($loseingLabels);
+
+            $member = DB::table('members')->where('email', $decodedData->email)->first();
+
+            if ($member) {
+                $user = Auth::loginUsingId($member->id);
                 $username = $user->name;
                 $available_spin = DB::table('member_spinner_count')
                     ->where('campaign_id', $codeContents['CampaignID'])
                     ->where('member_id', $user->id)
                     ->first();
+
+                // Create an array with equal number of winning and losing labels
+                $rewardArray = [];
+                $labelCount = [];
+                $timeToWin = round(($available_spin->total_spin * $winPercentage) / 100);
+
+                // Check if spins are available and prizes are already not set
+                if ($available_spin->remaining_spin > 0 && $available_spin->is_prizes_set === 0) {
+                    for ($i = 1; $i <= $available_spin->total_spin; $i++) {
+                        // Check if there are available winning labels and it's time to use them
+                        if ($numberOfWinningLabels > 0) {
+                            // Get available winning labels with their remaining prize quantities
+                            $availableWinningLabels = DB::table('spiner_data')
+                                ->whereIn('label_title', $winingLabels)
+                                ->where('available_prize', '>', 0)
+                                ->pluck('label_title')
+                                ->toArray();
+
+                            // If there are available winning labels, choose one randomly
+                            if (!empty($availableWinningLabels)) {
+                                $label = $availableWinningLabels[array_rand($availableWinningLabels)];
+                                $numberOfWinningLabels--;
+                            } else {
+                                // If no available winning labels, choose from losing labels
+                                $label = $loseingLabels[array_rand($loseingLabels)];
+                            }
+                        } else {
+                            // If all winning labels have been used, choose from losing labels
+                            $label = $loseingLabels[array_rand($loseingLabels)];
+                        }
+
+                        $rewardArray[] = [
+                            'campaign_id' => $codeContents['CampaignID'],
+                            'member_id' => $user->id,
+                            'spinner_round' => $i,
+                            'rewards' => $label
+                        ];
+
+                        // Count label occurrences / How much time a label used in data calculation
+                        if (!isset($labelCount[$label])) {
+                            $labelCount[$label] = 1;
+                        } else {
+                            $labelCount[$label]++;
+                        }
+
+                        // Subtract available prize quantity for the chosen label
+                        DB::table('spiner_data')
+                            ->where('label_title', $label)
+                            ->decrement('available_prize', 1);
+                    }
+                }
+
+
+                $dataInsertToDb = DB::table('campaign_member')->insert($rewardArray);
+                if ($dataInsertToDb === true) {
+                    if ($available_spin) {
+                        DB::table('member_spinner_count')
+                            ->where('id', $available_spin->id)
+                            ->update([
+                                'remaining_spin' => $available_spin->remaining_spin - $available_spin->total_spin
+                            ]);
+                    }
+
+                    DB::table('member_spinner_count')
+                        ->where('campaign_id', $codeContents['CampaignID'])
+                        ->where('member_id', $user->id)
+                        ->update([
+                            'is_prizes_set' => true
+                        ]);
+                };
+
+
                 $newObj = [
-                    'total_spin' => $available_spin->total_spin,
                     'username' => $username,
-                    'spin_options' => $labels,
+                    'spin_options' => [
+                        'labels' => $labels,
+                        'colors' => $colors
+                    ],
+                    'spinner_rewards' => $rewardArray,
                     'campaign_name' => $campaign->name,
                 ];
 
@@ -124,6 +222,9 @@ class LinkShareController extends Controller
             return response()->json(['message' => 'something went wrong', 'status' => 404], 404);
         }
     }
+
+
+
     public function makeQRCode($jsonString, $hash)
     {
         // dd("ok");
@@ -195,6 +296,8 @@ class LinkShareController extends Controller
         return $fullQRCodeUrl;
     }
 
+
+
     public function hashDataStore($e, $path)
     {
         if ($path) {
@@ -253,6 +356,43 @@ class LinkShareController extends Controller
 
         $encryptedData = $requestData['hash'];
 
+        // $getData = DB::table('hash_qr_code')->where('hash', $requestData['hash'])->select('qr_code_path')->first();
+
+        // if ($getData != null) {
+        // $member= DB::table('members')->where('email', $requestData['email'])->first();
+        // $user = Auth::loginUsingId($member->id);
+        // if (isset($user)) {
+        //     $dataFromQR = json_decode(Crypt::decrypt($encryptedData));
+
+        //     $labels = DB::table('spiner_data')->where('cam_id', $dataFromQR->CampaignID)->get()->pluck('label_title')->toArray();
+        //     $point = DB::table('campaigns')->where('id', $dataFromQR->CampaignID)->get()->pluck('unit_price_for_point');
+        //     $available_spin = round(intval($dataFromQR->PurchaseValue) / intval($point[0]));
+        //     //Insert spinner count, how much time a user could spin and remaining spin
+        //     DB::table('member_spinner_count')->updateOrInsert([
+        //         'campaign_id' => $dataFromQR->CampaignID,
+        //         'member_id' => $user->id,
+        //         'total_spin' => $available_spin,
+        //         'remaining_spin' => $available_spin,
+        //     ]);
+
+        //     $remaining_spin = DB::table('member_spinner_count')->where('campaign_id', $dataFromQR->CampaignID)->where('member_id', $user->id)->first();
+        //     $username = $user->name;
+        //     $accessToken = $user->createToken('token-for-spin');
+        // $response = [
+        //     'available_spin' => $remaining_spin->remaining_spin,
+        //     'spin_options' => $labels,
+        //     'auth_token' => $accessToken->plainTextToken,
+        //     'username' => $username,
+        //     'status' => 200,
+        //     'hash' => $encryptedData,
+        //     'path' => $getData->qr_code_path ?? '',
+        //     // 'number' => $requestData['phone'],
+        // ];
+
+        // return response()->json($response, 200);
+        // }
+        // }
+
         $makeQrPath = $this->makeQRCode($requestData, $encryptedData);
 
 
@@ -271,8 +411,9 @@ class LinkShareController extends Controller
                 return response()->json($response, 404);
             } else {
                 $dataFromQR = json_decode(Crypt::decrypt($encryptedData));
-                $u = DB::table('members')->where('email', $dataFromQR->email)->first();
-                $user = Auth::loginUsingId($u->id);
+                $member = DB::table('members')->where('email', $dataFromQR->email)->first();
+                $user = Auth::loginUsingId($member->id);
+                // dd($user);
                 if (isset($user)) {
                     $dataFromQR = json_decode(Crypt::decrypt($encryptedData));
                     $labels = DB::table('spiner_data')->where('cam_id', $dataFromQR->CampaignID)->get()->pluck('label_title')->toArray();
