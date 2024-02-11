@@ -108,15 +108,15 @@ class LinkShareController extends Controller
                 $colors[] = $value->label_color;
                 $is_wining_label[] = $value->is_wining_label;
             }
-
+            // dd($winingLabels);
             $arrC = array_count_values($is_wining_label);
-            $numberOfZeros = $arrC[0]; //Number of false values
-            $numberOfOnes = $arrC[1]; //Number of true values
+            // dd($arrC);
+            $numberOfZeros = $arrC[0] ?? 0; //Number of false values
+            $numberOfOnes = $arrC[1] ?? 0; //Number of true values
 
             $winPercentage = round(100 / count($is_wining_label) * $numberOfOnes);
             $winningPercentage = $winPercentage;
             $losingPercentage = 100 - $winningPercentage;
-
             // Calculate the number of winning and losing labels based on percentages
             $numberOfWinningLabels = count($winingLabels);
             $numberOfLosingLabels = count($loseingLabels);
@@ -136,9 +136,10 @@ class LinkShareController extends Controller
                 $labelCount = [];
                 $timeToWin = round(($available_spin->total_spin * $winPercentage) / 100);
 
-                // Check if spins are available and prizes are already not set
+                // Check if spins are available and prizes are not set
                 if ($available_spin->remaining_spin > 0 && $available_spin->is_prizes_set === 0) {
                     for ($i = 1; $i <= $available_spin->total_spin; $i++) {
+                        $label = null;
                         // Check if there are available winning labels and it's time to use them
                         if ($numberOfWinningLabels > 0) {
                             // Get available winning labels with their remaining prize quantities
@@ -147,60 +148,67 @@ class LinkShareController extends Controller
                                 ->where('available_prize', '>', 0)
                                 ->pluck('label_title')
                                 ->toArray();
-
                             // If there are available winning labels, choose one randomly
                             if (!empty($availableWinningLabels)) {
                                 $label = $availableWinningLabels[array_rand($availableWinningLabels)];
                                 $numberOfWinningLabels--;
-                            } else {
-                                // If no available winning labels, choose from losing labels
-                                $label = $loseingLabels[array_rand($loseingLabels)];
                             }
                         } else {
-                            // If all winning labels have been used, choose from losing labels
-                            $label = $loseingLabels[array_rand($loseingLabels)];
+                            $availablelooseingLabels = DB::table('spiner_data')
+                                ->whereIn('label_title', $loseingLabels)
+                                ->where('available_prize', '>', 0)
+                                ->pluck('label_title')
+                                ->toArray();
+
+                            if (!empty($availablelooseingLabels)) {
+                                $label = $loseingLabels[array_rand($availablelooseingLabels)];
+                            }
                         }
 
                         $rewardArray[] = [
                             'campaign_id' => $codeContents['CampaignID'],
                             'member_id' => $user->id,
                             'spinner_round' => $i,
-                            'rewards' => $label
+                            'rewards' => $label ?? 'No Rewards found!'
                         ];
 
-                        // Count label occurrences / How much time a label used in data calculation
+                        // Count label occurrences
                         if (!isset($labelCount[$label])) {
                             $labelCount[$label] = 1;
                         } else {
                             $labelCount[$label]++;
                         }
 
-                        // Subtract available prize quantity for the chosen label
+                        // Update the available prize quantity for the chosen label
                         DB::table('spiner_data')
                             ->where('label_title', $label)
+                            ->where('available_prize', '>', 0)
                             ->decrement('available_prize', 1);
                     }
-                }
 
+                    $dataInsertToDb = DB::table('campaign_member')->insert($rewardArray);
+                    if ($dataInsertToDb === true) {
+                        if ($available_spin) {
+                            DB::table('member_spinner_count')
+                                ->where('id', $available_spin->id)
+                                ->update([
+                                    'remaining_spin' => $available_spin->remaining_spin - $available_spin->total_spin
+                                ]);
+                        }
 
-                $dataInsertToDb = DB::table('campaign_member')->insert($rewardArray);
-                if ($dataInsertToDb === true) {
-                    if ($available_spin) {
                         DB::table('member_spinner_count')
-                            ->where('id', $available_spin->id)
+                            ->where('campaign_id', $codeContents['CampaignID'])
+                            ->where('member_id', $user->id)
                             ->update([
-                                'remaining_spin' => $available_spin->remaining_spin - $available_spin->total_spin
+                                'is_prizes_set' => true
                             ]);
-                    }
-
-                    DB::table('member_spinner_count')
+                    };
+                } else {
+                    $previousData = DB::table('campaign_member')
                         ->where('campaign_id', $codeContents['CampaignID'])
-                        ->where('member_id', $user->id)
-                        ->update([
-                            'is_prizes_set' => true
-                        ]);
-                };
-
+                        ->where('member_id', $member->id)
+                        ->get();
+                }
 
                 $newObj = [
                     'username' => $username,
@@ -208,7 +216,7 @@ class LinkShareController extends Controller
                         'labels' => $labels,
                         'colors' => $colors
                     ],
-                    'spinner_rewards' => $rewardArray,
+                    'spinner_rewards' => !empty($rewardArray) ? $rewardArray : $previousData,
                     'campaign_name' => $campaign->name,
                 ];
 
