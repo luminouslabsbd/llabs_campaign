@@ -22,6 +22,8 @@ use Luminouslabs\Installer\Http\Controllers\StaffDashBoardController;
 Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as' => 'luminouslabs::'], function () {
 
     Route::get('campain-setup-index', [CampainController::class, 'getComapin'])->name('partner.campain.manage');
+    Route::get('cards-manage', [CampainController::class, 'cardsManage'])->name('partner.cards.manage');
+    Route::post('store-card', [CampainController::class, 'storeCard'])->name('partner.card.store');
     Route::get('campain-setup-create', [CampainController::class, 'create'])->name('partner.campain.create');
     Route::post('campain-setup-storge', [CampainController::class, 'CampaignStorge'])->name('partner.campain.storge');
     Route::get('/campain-edit/{id}', [CampainController::class, 'edit'])->name('partner.campain.edit');

@@ -1,6 +1,7 @@
 <?php
 
 namespace Luminouslabs\Installer\Http\Controllers;
+
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
@@ -17,34 +18,76 @@ use Illuminate\Support\Facades\Validator;
 
 class CampainController extends Controller
 {
-    public function getComapin(Request $request){
+    public function cardsManage(Request $request)
+    {
+        // $url = 'https://keoswalletapi.luminousdemo.com/api/get-user-cards?email=' . auth()->user()->email;
+        $url = config('api.wallet_api_endpoint') . '?email=' . auth('partner')->user()->email;
+
+        $response = Http::get($url);
+
+        if ($response->successful()) {
+            $data = json_decode($response->body(), true);
+            // dd($data);
+            return view('luminouslabs::components.member.cards', ['cards' => $data]);
+        } else {
+            return response()->json(['error' => 'Failed to fetch data'], $response->status());
+        }
+    }
+
+    public function storeCard(Request $request)
+    {
+        // dd(auth('partner')->user());
+        $validator =  Validator::make(
+            $request->all(),
+            [
+                'selected_card' => 'required'
+            ],
+            [
+                'selected_card' => 'This select field is required'
+            ]
+        );
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        DB::table('partners')
+            ->where('id', auth('partner')->user()->id)
+            ->update([
+                'member_card' => $request->input('selected_card'),
+            ]);
+
+        return redirect()->back()->with('success', 'Card data saved successfully.');
+    }
+
+
+    public function getComapin(Request $request)
+    {
 
         $userId = auth('partner')->user()->id;
         $routeDataDefinition = 'campain';
 
-        if($request->search){
+        if ($request->search) {
             $campainData = DB::table('campaigns')->where(function ($query) use ($request) {
                 $query->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('card_id', 'like', '%' . $request->search . '%');
-               })->paginate(15);
-        }else{
-            $campainData = DB::table('campaigns')->where('created_by',$userId )->paginate(15);
+            })->paginate(15);
+        } else {
+            $campainData = DB::table('campaigns')->where('created_by', $userId)->paginate(15);
         }
-       
-        return view('luminouslabs::index', compact('routeDataDefinition','campainData'));
 
+        return view('luminouslabs::index', compact('routeDataDefinition', 'campainData'));
     }
 
-    public function create(Request $request){
+    public function create(Request $request)
+    {
 
         $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active',1)->where('created_by',$userId)->select('id','name','unique_identifier')->get();
-        return view('luminouslabs::form',compact('cards'));
-        
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
+        return view('luminouslabs::form', compact('cards'));
     }
 
-    public function CampaignStorge(Request $request){
-        
+    public function CampaignStorge(Request $request)
+    {
+        // dd($request->all());
         $userid = auth('partner')->user()->id;
         $campaignData = $request->all();
 
@@ -86,45 +129,49 @@ class CampainController extends Controller
             'status'    => 1,
             'unit_price_for_coupon' => $request->unit_price_for_coupon,
             'unit_price_for_point' => $request->unit_price_for_point,
-            'coupon' => isset($request->coupon) ? $request->coupon : null ,
+            'coupon' => isset($request->coupon) ? $request->coupon : null,
             'created_at' => date("Y-m-d H:i:s"),
             'updated_at' => date("Y-m-d H:i:s")
         ];
-       
+
         $lastInsertedId = DB::table('campaigns')->insertGetId($campaignArray);
-        $this->spinerDataStore($campaignData,$lastInsertedId);
+        $this->spinerDataStore($campaignData, $lastInsertedId);
         return redirect()->route('luminouslabs::partner.campain.manage');
     }
 
-    public function spinerDataStore($campaignData,$campaign_id){
-       
-        if ( isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color'])) {
+    public function spinerDataStore($campaignData, $campaign_id)
+    {
+        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color'])) {
             // Get the number of items in the label arrays
             $numItems = count($campaignData['label_title']);
             // Iterate over the items and create labels
             for ($i = 0; $i < $numItems; $i++) {
                 DB::table('spiner_data')->insert([
+
                     'cam_id' => $campaign_id,
                     'label_title' => $campaignData['label_title'][$i],
                     'label_value' => $campaignData['label_value'][$i],
                     'label_color' => $campaignData['label_color'][$i],
+                    'is_wining_label' => isset($campaignData['is_wining_label'][$i]) && $campaignData['is_wining_label'][$i] == 'on' ? true : false,
+                    'init_prize' => isset($campaignData['init_prize'][$i]) ? $campaignData['init_prize'][$i] : 0,
+                    'available_prize' => isset($campaignData['available_prize'][$i]) ? $campaignData['available_prize'][$i] : 0,
                 ]);
             }
             return true;
         }
         return false;
-
     }
 
-    public function edit($id){
+    public function edit($id)
+    {
 
         $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active',1)->where('created_by',$userId)->select('id','name','unique_identifier')->get();
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
         $data = DB::table('campaigns')
-                        ->where('campaigns.id',  request()->id)
-                        ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
-                        ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
-                        ->get();
+            ->where('campaigns.id',  request()->id)
+            ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
+            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
+            ->get();
 
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
             return [
@@ -148,56 +195,56 @@ class CampainController extends Controller
             ];
         })->values()->first();
 
-        return view('luminouslabs::edit',compact('result','cards'));
-
+        return view('luminouslabs::edit', compact('result', 'cards'));
     }
 
-    public function update(Request $request,){
+    public function update(Request $request,)
+    {
 
-            $campaignData = $request->all() ;
-            $campaign_id = request()->id ;
+        $campaignData = $request->all();
+        $campaign_id = request()->id;
 
-            DB::table('campaigns')->where('id',$campaign_id)->update([
-                'name' => $campaignData['name'],
-                'card_id' => $campaignData['card_id'],
-                'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
-                'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
-                'unit_price_for_coupon' => $request->unit_price_for_coupon,
-                'unit_price_for_point' => $request->unit_price_for_point,
-                'coupon' => isset($request->coupon) ? $request->coupon : null ,
-            ]);
+        DB::table('campaigns')->where('id', $campaign_id)->update([
+            'name' => $campaignData['name'],
+            'card_id' => $campaignData['card_id'],
+            'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
+            'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
+            'unit_price_for_coupon' => $request->unit_price_for_coupon,
+            'unit_price_for_point' => $request->unit_price_for_point,
+            'coupon' => isset($request->coupon) ? $request->coupon : null,
+        ]);
 
-            if ( isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['spiner_title_id'])) {
-                // Get the number of items in the label arrays
-                $numItems = count($campaignData['label_title']);
-                for ($i = 0; $i < $numItems; $i++) {
-                    $spinerId = $campaignData['spiner_title_id'][$i];
-                    $spinerData = [
-                        'cam_id' => $campaign_id,
-                        'label_title' => $campaignData['label_title'][$i],
-                        'label_value' => $campaignData['label_value'][$i],
-                        'label_color' => $campaignData['label_color'][$i],
-                    ];
-            
-                    DB::table('spiner_data')->updateOrInsert(
-                        ['id' => $spinerId, 'cam_id' => $campaign_id],
-                        $spinerData
-                    );
-                }
+        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['spiner_title_id'])) {
+            // Get the number of items in the label arrays
+            $numItems = count($campaignData['label_title']);
+            for ($i = 0; $i < $numItems; $i++) {
+                $spinerId = $campaignData['spiner_title_id'][$i];
+                $spinerData = [
+                    'cam_id' => $campaign_id,
+                    'label_title' => $campaignData['label_title'][$i],
+                    'label_value' => $campaignData['label_value'][$i],
+                    'label_color' => $campaignData['label_color'][$i],
+                ];
+
+                DB::table('spiner_data')->updateOrInsert(
+                    ['id' => $spinerId, 'cam_id' => $campaign_id],
+                    $spinerData
+                );
             }
-            return redirect()->route('luminouslabs::partner.campain.manage');
-            
+        }
+        return redirect()->route('luminouslabs::partner.campain.manage');
     }
 
-    public function view($id){
+    public function view($id)
+    {
 
         $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active',1)->where('created_by',$userId)->select('id','name','unique_identifier')->get();
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
         $data = DB::table('campaigns')
-                        ->where('campaigns.id',  request()->id)
-                        ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
-                        ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
-                        ->get();
+            ->where('campaigns.id',  request()->id)
+            ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
+            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
+            ->get();
 
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
             return [
@@ -222,15 +269,15 @@ class CampainController extends Controller
             ];
         })->values()->first();
 
-        return view('luminouslabs::view',compact('result','cards'));
-
+        return view('luminouslabs::view', compact('result', 'cards'));
     }
 
-    public function delete($id){
-       
+    public function delete($id)
+    {
+
         try {
-            DB::table('campaigns')->where('id',request()->id)->delete();
-            DB::table('spiner_data')->where('cam_id',request()->id)->delete();
+            DB::table('campaigns')->where('id', request()->id)->delete();
+            DB::table('spiner_data')->where('cam_id', request()->id)->delete();
             return response()->json(['message' => 'Item deleted successfully'], 200);
         } catch (\Exception $e) {
             // Handle the exception or log it for debugging
@@ -240,10 +287,11 @@ class CampainController extends Controller
         return redirect()->route('luminouslabs::partner.campain.manage');
     }
 
-    public function getSpinarData(Request $request){
+    public function getSpinarData(Request $request)
+    {
         // Convert the associative array to a JSON string
         $jsonData = $request->json()->all();
-        
+
         $validator = Validator::make($request->json()->all(), [
             'id' => 'required',
         ]);
@@ -255,10 +303,10 @@ class CampainController extends Controller
         }
 
         $data = DB::table('campaigns')
-                        ->where('campaigns.id',  request()->id)
-                        ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
-                        ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
-                        ->get();
+            ->where('campaigns.id',  request()->id)
+            ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
+            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
+            ->get();
 
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
             return [
@@ -283,23 +331,15 @@ class CampainController extends Controller
         })->values()->first();
 
         return response()->json(['data' => $result]);
-
     }
 
-    public function campain_spiner_id_remove($id){
+    public function campain_spiner_id_remove($id)
+    {
         try {
             DB::table('spiner_data')->where('id', request()->id)->delete();
             return response()->json(['message' => 'Data deleted successfully'], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to delete data', 'message' => $e->getMessage()], 500);
         }
-        
     }
-
-    
-
-
-
-
-
 }

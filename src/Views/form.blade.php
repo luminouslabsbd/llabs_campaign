@@ -95,6 +95,12 @@
         #input-container {
             display: block;
         }
+
+        @media (min-width: 640px) {
+            .sm\:items-end {
+                align-items: flex-end;
+            }
+        }
     </style>
     <section class="">
 
@@ -215,33 +221,45 @@
                             </div>
 
                             <div
-                                class=" flex flex-wrap items-stretch sm:items-center justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
-                                <div class=" ">
+                                class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Title</span>
                                         <input type="text" name="label_title[]" class=" form-input rounded" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Value</span>
                                         <input type="text" name="label_value[]" class="form-input rounded" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Color</span>
                                         <input type="color" name="label_color[]" class="rounded form-input" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-1/12">
+                                    <label class="flex flex-col gap-2">
+                                        <span class=" text-gray-700">Init prize</span>
+                                        <input type="number" name="init_prize[]" class="rounded form-input" />
+                                    </label>
+                                </div>
+                                <div class="w-full sm:w-1/12">
+                                    <label class="flex flex-col gap-2">
+                                        <span class=" text-gray-700">Available prize</span>
+                                        <input type="number" name="available_prize[]" class="rounded form-input" />
+                                    </label>
+                                </div>
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Is wining label</span>
                                         <input type="checkbox" name="is_wining_label[]" class="rounded" />
                                     </label>
                                 </div>
-                                <button type="button"
-                                    class="remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
+                                <button type="button" style="margin-bottom: 0px"
+                                    class="w-full sm:w-1/12 remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
                             </div>
                             <div class="spinner-form" id="input-container"></div>
 
@@ -269,52 +287,57 @@
     <script>
         $(document).ready(function() {
             // Add Input
+            var index = 1;
             $("#add-input").on("click", function() {
+
                 // var newInput = '<div class="input-container"><input type="text" name="dynamicInput[]" class="dynamic-input" /><button type="button" class="remove-input">Remove</button></div>';
                 var newInput =
-                    // `<div class="spinner-form">
-                //     <div class="spinner-fomr-col">
-                //         <input type="text" name="label_title[]" class="dynamic-input" />
-                //         </div>
-                //         <div class="spinner-fomr-col">
-                //             <input type="text" name="label_value[]" class="dynamic-input" />
-                //             </div>
-                //             <div class="spinner-fomr-col">
-                //                 <input type="color" name="label_color[]" class="dynamic-input" />
-                //                 </div>
-                //                 <button type="button" class="remove-input">Remove</button>
-                //                 </div>`;
                     `
                     <div
-                                class=" flex mt-2 flex-wrap items-stretch sm:items-center justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
-                                <div class=" ">
+                                class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Title</span>
                                         <input type="text" name="label_title[]" class=" form-input rounded" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Value</span>
                                         <input type="text" name="label_value[]" class="form-input rounded" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Color</span>
                                         <input type="color" name="label_color[]" class="rounded form-input" />
                                     </label>
                                 </div>
-                                <div class="">
+                                <div class="w-full sm:w-1/12">
                                     <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Is wining label</span>
-                                        <input type="checkbox" name="is_wining_label[]" class="rounded" />
+                                        <span class=" text-gray-700">Init prize</span>
+                                        <input type="number" name="init_prize[${index}]" class="rounded form-input" />
                                     </label>
                                 </div>
-                                <button type="button"
-                                    class="remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
+                                <div class="w-full sm:w-1/12">
+                                    <label class="flex flex-col gap-2">
+                                        <span class=" text-gray-700">Available prize</span>
+                                        <input type="number" name="available_prize[${index}]" class="rounded form-input" />
+                                    </label>
+                                </div>
+                                <div class="w-full sm:w-2/12">
+                                    <label class="flex flex-col gap-2">
+                                        <span class=" text-gray-700">Is wining label</span>
+                                        <input type="checkbox" name="is_wining_label[${index}]" class="rounded" />
+                                    </label>
+                                </div>
+                                <button type="button" style="margin-bottom: 0px"
+                                    class="w-full sm:w-1/12 remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
                             </div>`;
+
                 $("#input-container").append(newInput);
+                index++;
+
             });
 
             // Remove Input
