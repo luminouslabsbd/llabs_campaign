@@ -100,7 +100,7 @@ class LinkShareController extends Controller
             $is_wining_label = [];
             foreach ($spinnerData as $key => $value) {
                 if ($value->is_wining_label === 1) {
-                    $winingLabels[] = $value->label_title;
+                    $winingLabels[] = $value->label_title; // Number of winning label
                 } else {
                     $loseingLabels[] = $value->label_title;
                 }
@@ -109,10 +109,10 @@ class LinkShareController extends Controller
                 $is_wining_label[] = $value->is_wining_label;
             }
             // dd($winingLabels);
-            $arrC = array_count_values($is_wining_label);
-            // dd($arrC);
-            $numberOfZeros = $arrC[0] ?? 0; //Number of false values
-            $numberOfOnes = $arrC[1] ?? 0; //Number of true values
+            $arrayContainLabels = array_count_values($is_wining_label);
+            // dd($arrayContainLabels);
+            $numberOfZeros = $arrayContainLabels[0] ?? 0; //Number of false values
+            $numberOfOnes = $arrayContainLabels[1] ?? 0; //Number of true values
 
             $winPercentage = round(100 / count($is_wining_label) * $numberOfOnes);
             $winningPercentage = $winPercentage;
@@ -120,7 +120,7 @@ class LinkShareController extends Controller
             // Calculate the number of winning and losing labels based on percentages
             $numberOfWinningLabels = count($winingLabels);
             $numberOfLosingLabels = count($loseingLabels);
-
+            // dd($numberOfWinningLabels);
             $member = DB::table('members')->where('email', $decodedData->email)->first();
 
             if ($member) {
@@ -135,13 +135,13 @@ class LinkShareController extends Controller
                 $rewardArray = [];
                 $labelCount = [];
                 $timeToWin = round(($available_spin->total_spin * $winPercentage) / 100);
-
+                // dd($timeToWin, $winPercentage);
                 // Check if spins are available and prizes are not set
                 if ($available_spin->remaining_spin > 0 && $available_spin->is_prizes_set === 0) {
                     for ($i = 1; $i <= $available_spin->total_spin; $i++) {
                         $label = null;
                         // Check if there are available winning labels and it's time to use them
-                        if ($numberOfWinningLabels > 0) {
+                        if ($timeToWin > 0) {
                             // Get available winning labels with their remaining prize quantities
                             $availableWinningLabels = DB::table('spiner_data')
                                 ->whereIn('label_title', $winingLabels)
@@ -152,6 +152,7 @@ class LinkShareController extends Controller
                             if (!empty($availableWinningLabels)) {
                                 $label = $availableWinningLabels[array_rand($availableWinningLabels)];
                                 $numberOfWinningLabels--;
+                                $timeToWin--;
                             }
                         } else {
                             $availablelooseingLabels = DB::table('spiner_data')
