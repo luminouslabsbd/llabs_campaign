@@ -552,4 +552,20 @@ class LinkShareController extends Controller
             );
         }
     }
+
+    public function updateSpinnedRewards()
+    {
+        $id = request()->id;
+        $status = DB::table('campaign_member')
+            ->where('id',$id)
+            ->update(['is_claimed'=>true]);
+
+        if ($status){
+            return response()->json([
+                'success'=>true,
+                'message'=>'Claimed Update success'
+            ]);
+        }
+
+    }
 }
