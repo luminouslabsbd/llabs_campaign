@@ -15,6 +15,45 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class LinkShareController extends Controller
 {
+    public function userCampaignQrData(Request $request)
+    {
+        // Validate request inputs
+        $validator = Validator::make($request->all(), [
+            'OrderID' => 'required',
+            'TenantID' => 'required',
+            'CampaignID' => 'required',
+            'ProductID' => 'required',
+            'PurchaseValue' => 'required',
+            'email' => 'required|email',
+            'is_login' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            // Validation failed
+            $errorResponse = [
+                'status' => 'error',
+                'message' => 'Validation error.',
+                'errors' => $validator->errors(),
+            ];
+            return response()->json($errorResponse, 422);
+        }
+
+        $member = DB::table('members')->where('email', $request['email'])->first();
+
+        if ($member) {
+            $jsonString = json_encode(json_decode($request->getContent()));
+            $encryptedData = Crypt::encrypt($jsonString);
+
+            $qrCode = $this->QrGenerator([
+                'email' => $request['email'],
+                'hash' => $encryptedData,
+            ]);
+
+            return $response = $qrCode->getData();
+        } else {
+            return response()->json(['message' => "User email don't found", "status" => 404], 404);
+        }
+    }
 
     public function getHashByTenantID(Request $request)
     {
@@ -236,15 +275,7 @@ class LinkShareController extends Controller
 
     public function makeQRCode($jsonString, $hash)
     {
-        // dd("ok");
-
-        // Check if the data already exists
-        // $existingQRCode = DB::table('hash_qr_code')->where('hash', $hash)->first();
-        // if (isset($existingQRCode)) {
-        //     return $fullQRCodeUrl = $existingQRCode->qr_code_path;
-        // } else {
         $decodedData = json_decode(Crypt::decrypt($hash));
-        // dd($decodedData, $jsonString);
 
         if (is_object($decodedData)) {
             $codeContents = json_decode(json_encode($decodedData), true);
@@ -263,30 +294,6 @@ class LinkShareController extends Controller
             mkdir($tempDir, 0755, true);
         }
 
-
-
-        // $spinnerData = DB::table('spiner_data')->where('cam_id', $codeContents['CampaignID'])->get();
-        // $campaign = DB::table('campaigns')->find($codeContents['CampaignID']);
-
-        // foreach ($spinnerData as $key => $value) {
-        //     $labels[] = $value->label_title;
-        // }
-
-        // $user = Auth::user();
-        // $username = $user->name;
-        // $available_spin = DB::table('member_spinner_count')
-        //     ->where('campaign_id', $codeContents['CampaignID'])
-        //     ->where('member_id', $user->id)
-        //     ->first();
-
-        // $newObj = [
-        //     'available_spin' => $available_spin->remaining_spin,
-        //     'username' => $username,
-        //     'spin_options' => $labels,
-        //     'campaign_name' => $campaign->name,
-        // ];
-
-        // $codeContents['spinner_details'] = $newObj;
         $qrCodeFileName = uniqid('qr_code_') . '.png';
         // Generate QR code
         QrCode::format('png')->size(300)->generate(route('qr-scaned', ['hash_id' => $e]), $tempDir . $qrCodeFileName);
@@ -346,9 +353,9 @@ class LinkShareController extends Controller
         }
     }
 
-    public function QrGenerator(Request $request)
+    public function QrGenerator($request)
     {
-        $requestData = $request->only(['hash', 'email']);
+        $requestData = $request;
 
         $validator = validator($requestData, [
             'hash' => 'required',
@@ -356,7 +363,7 @@ class LinkShareController extends Controller
 
         if ($validator->fails()) {
             $errorResponse = [
-                'status' => 'error',
+                'status' => 422,
                 'message' => 'Validation error.',
                 'errors' => $validator->errors(),
             ];
@@ -454,7 +461,7 @@ class LinkShareController extends Controller
                         'hash' => $requestData['hash'],
                         'path' => $makeQrPath ?? '',
                     ];
-                    return $response;
+                    return response()->json($response, 200);
                 }
             }
         } else {

@@ -28,6 +28,9 @@ Route::prefix('{locale}/v1/ll')->group(function () {
     //Get all data after scan
     Route::get('scaned/{hash_id}', [LinkShareController::class, 'QrCodeScaned'])->name('qr-scaned');
 
+    // Return additional data
+    Route::get('/user-campaign-qr-data', [LinkShareController::class, 'userCampaignQrData']);
+
     //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
 });
