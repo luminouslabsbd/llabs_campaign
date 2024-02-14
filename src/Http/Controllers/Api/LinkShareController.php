@@ -262,7 +262,6 @@ class LinkShareController extends Controller
 
                 // $codeContents['spinner_details'] = $newObj;
 
-
                 $totalSpin = DB::table('campaign_member')
                     ->where('campaign_id',$codeContents['CampaignID'])
                     ->where('member_id',$member->id)
@@ -288,8 +287,6 @@ class LinkShareController extends Controller
                     'hash_id' => $id
                 ]);
 
-
-
                 $memberWallets = DB::table('member_wallets')
                     ->where('member_email',$member->email)
                     ->get();
@@ -304,7 +301,6 @@ class LinkShareController extends Controller
                         ->where('campaign_id',$decodedata->id)
                         ->where('is_claimed',false)
                         ->count();
-
 
                     $data = [
                         'campaingId' => $decodedata->id,
@@ -324,10 +320,6 @@ class LinkShareController extends Controller
                     ->where('member_id',$member->id)
                     ->where('is_claimed',false)
                     ->first();
-
-
-
-
                 $codeContents['currentSpin'] = $currentSpin;
                 $codeContents['allWalletsData'] = $allWallets;
 
