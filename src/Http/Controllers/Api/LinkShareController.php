@@ -339,16 +339,7 @@ class LinkShareController extends Controller
         return DB::table('campaigns')->select('id','name')->find($decodeData->CampaignID);
     }
 
-    public function countAvailableSpin($memberId,$campaginId)
-    {
-        $data = DB::table('campaign_member')
-            ->where('member_id',$memberId)
-            ->where('campaign_id',$campaginId)
-            ->where('is_claimed',false)
-            ->count();
 
-        return $data;
-    }
 
     public function makeQRCode($jsonString, $hash)
     {
