@@ -568,4 +568,22 @@ class LinkShareController extends Controller
         }
 
     }
+
+    public function getWinningRewards(Request $request)
+    {
+        $this->validate($request,[
+            'member_id'=>'required',
+            'campaign_id'=>'required'
+        ]);
+
+        $data = DB::table('campaign_member')
+            ->select('campaign_member.*','campaigns.name')
+            ->join('campaigns','campaigns.id' ,'=','campaign_member.campaign_id')
+            ->where('member_id',$request->member_id)
+            ->where('campaign_id',$request->campaign_id)
+            ->where('is_claimed',true)
+            ->get();
+
+        return $data;
+    }
 }
