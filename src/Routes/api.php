@@ -33,4 +33,10 @@ Route::prefix('{locale}/v1/ll')->group(function () {
 
     //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
+
+    //Update Member Reward counting
+    Route::get('/update-spinned-rewards/{id}',[LinkShareController::class, 'updateSpinnedRewards']);
+    //Get Member All Winning Rewards
+    Route::post('/get-winning-rewards',[LinkShareController::class, 'getWinningRewards']);
+
 });

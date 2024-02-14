@@ -250,7 +250,27 @@ class LinkShareController extends Controller
                         ->get();
                 }
 
+                // $newObj = [
+                //     'username' => $username,
+                //     'spin_options' => [
+                //         'labels' => $labels,
+                //         'colors' => $colors
+                //     ],
+                //     'spinner_rewards' => !empty($rewardArray) ? $rewardArray : $previousData,
+                //     'campaign_name' => $campaign->name,
+                // ];
+
+                // $codeContents['spinner_details'] = $newObj;
+
+
+                $totalSpin = DB::table('campaign_member')
+                    ->where('campaign_id',$codeContents['CampaignID'])
+                    ->where('member_id',$member->id)
+                    ->where('is_claimed',false)
+                    ->count();
+
                 $newObj = [
+                    'available_spin' => $totalSpin,
                     'username' => $username,
                     'spin_options' => [
                         'labels' => $labels,
@@ -262,6 +282,55 @@ class LinkShareController extends Controller
 
                 $codeContents['spinner_details'] = $newObj;
 
+                MemberWallet::updateOrCreate(['member_id'=>$member->id,'hash_id' => $id],[
+                    'member_id'=> $member->id,
+                    'member_email' => $member->email,
+                    'hash_id' => $id
+                ]);
+
+
+
+                $memberWallets = DB::table('member_wallets')
+                    ->where('member_email',$member->email)
+                    ->get();
+
+                $allWallets = [];
+
+                foreach ($memberWallets as $wallet){
+                    $decodedata = $this->decodeHash($wallet->hash_id);
+
+                    $totalAvailableCount = DB::table('campaign_member')
+                        ->where('member_id',$wallet->member_id)
+                        ->where('campaign_id',$decodedata->id)
+                        ->where('is_claimed',false)
+                        ->count();
+
+
+                    $data = [
+                        'campaingId' => $decodedata->id,
+                        'memberId' => $member->id,
+                        'campaingName'=>$decodedata->name,
+                        'memberEmail' => $member->email,
+                        'hashId' => $wallet->hash_id,
+                        'availableSpin' => $totalAvailableCount,
+                        'createdAt'=>$wallet->created_at
+                    ];
+
+                    $allWallets[]=$data;
+                }
+
+                $currentSpin = DB::table('campaign_member')
+                    ->where('campaign_id',$codeContents['CampaignID'])
+                    ->where('member_id',$member->id)
+                    ->where('is_claimed',false)
+                    ->first();
+
+
+
+
+                $codeContents['currentSpin'] = $currentSpin;
+                $codeContents['allWalletsData'] = $allWallets;
+
                 return response()->json($codeContents, 200);
             } else {
                 return response()->json(['message' => 'Users not found', 'status' => 404], 404);
@@ -271,7 +340,23 @@ class LinkShareController extends Controller
         }
     }
 
+    public function decodeHash($id)
+    {
+        $hash = DB::table('hash_qr_code')->select('hash')->find($id)->hash;
+        $decodeData = json_decode(Crypt::decrypt($hash));
+        return DB::table('campaigns')->select('id','name')->find($decodeData->CampaignID);
+    }
 
+    public function countAvailableSpin($memberId,$campaginId)
+    {
+        $data = DB::table('campaign_member')
+            ->where('member_id',$memberId)
+            ->where('campaign_id',$campaginId)
+            ->where('is_claimed',false)
+            ->count();
+
+        return $data;
+    }
 
     public function makeQRCode($jsonString, $hash)
     {
