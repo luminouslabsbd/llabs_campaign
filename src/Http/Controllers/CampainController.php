@@ -2,6 +2,7 @@
 
 namespace Luminouslabs\Installer\Http\Controllers;
 
+use App\Models\MemberCard;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use App\Notifications\Member\Registration;
 use Illuminate\Validation\ValidationException;
+use Luminouslabs\Installer\Models\Campaign;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Validator;
 
@@ -79,15 +81,85 @@ class CampainController extends Controller
 
     public function create(Request $request)
     {
-
         $userId = auth('partner')->user()->id;
         $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
         return view('luminouslabs::form', compact('cards'));
     }
 
+
+    public function store(Request $request)
+    {
+        return $request->all();
+        $userid = auth('partner')->user()->id;
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'card_id' => 'required|numeric', // Adjust this rule based on your requirements
+            'unit_price_for_coupon' => 'required|numeric',
+            'unit_price_for_point' => 'required|numeric',
+            'coupon'  => 'required'
+        ];
+        $messages = [
+            'name.required' => 'The name field is required.',
+            'coupon.required' => 'The coupon field is required.',
+            'card_id.required' => 'The card ID field is required.',
+            'card_id.numeric' => 'The card ID must be a number.',
+            'unit_price_for_coupon.required' => 'The unit price for coupon field is required.',
+            'unit_price_for_coupon.numeric' => 'The unit price for coupon must be a number.',
+            'unit_price_for_point.required' => 'The unit price for point field is required.',
+            'unit_price_for_point.numeric' => 'The unit price for point must be a number.',
+        ];
+
+        // Run the validator
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+
+        $campagin = Campaign::create([
+            'name' => $request->name,
+            'card_id' => $request->card_id,
+            'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
+            'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
+            'created_by' =>  $userid,
+            'tenant_id' => $userid,
+            'campain_code' => bin2hex(random_bytes(10)),
+            'status'    => 1,
+            'unit_price_for_coupon' => $request->unit_price_for_coupon,
+            'unit_price_for_point' => $request->unit_price_for_point,
+            'campaign_type' => $request->campaign_type,
+            'coupon' => isset($request->coupon) ? $request->coupon : null,
+            'created_at' => date("Y-m-d H:i:s"),
+            'updated_at' => date("Y-m-d H:i:s")
+        ]);
+
+        foreach ($request->label_title as $i => $value){
+            $data[] = [
+                'cam_id' =>  $campagin->id,
+                'campaign_id' => $campagin->id,
+                'label_title' => $request->label_title[$i],
+                'label_value' => $request->label_value[$i],
+                'label_color' => $request->label_color[$i],
+                'init_prize' => isset($request->init_prize[$i]) ? $request->init_prize[$i] : 0,
+                'available_prize' => isset($request->available_prize[$i]) ? $request->available_prize[$i] : 0,
+                'is_wining_label' => isset($request->is_wining_label[$i]) && $request->is_wining_label[$i] == 'on' ? true : false
+            ];
+        }
+
+
+
+        $campagin->spinnerData()->createMany($data);
+
+
+        return redirect()->route('luminouslabs::partner.campain.manage');
+    }
     public function CampaignStorge(Request $request)
     {
-        // dd($request->all());
+        //return $request->all();
+
         $userid = auth('partner')->user()->id;
         $campaignData = $request->all();
 
@@ -141,13 +213,12 @@ class CampainController extends Controller
 
     public function spinerDataStore($campaignData, $campaign_id)
     {
-        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color'])) {
+        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['is_wining_label']) && isset($campaignData['init_prize']) && isset($campaignData['available_prize'])) {
             // Get the number of items in the label arrays
             $numItems = count($campaignData['label_title']);
             // Iterate over the items and create labels
             for ($i = 0; $i < $numItems; $i++) {
-                DB::table('spiner_data')->insert([
-
+                 DB::table('spiner_data')->insert([
                     'cam_id' => $campaign_id,
                     'label_title' => $campaignData['label_title'][$i],
                     'label_value' => $campaignData['label_value'][$i],
@@ -162,6 +233,106 @@ class CampainController extends Controller
         return false;
     }
 
+//    public function edit($id)
+//    {
+//        $userId = auth('partner')->user()->id;
+//        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
+//        $data = DB::table('campaigns')
+//            ->where('campaigns.id',  request()->id)
+//            ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
+//            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color','spiner_data.init_prize','spiner_data.available_prize','spiner_data.is_wining_label')
+//            ->get();
+//
+//        $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
+//            return [
+//                'id' => $groupedItems->first()->id,
+//                'name' => $groupedItems->first()->name,
+//                'card_id' => $groupedItems->first()->card_id,
+//                'price_check' => $groupedItems->first()->price_check,
+//                'point_check' => $groupedItems->first()->point_check,
+//                'unit_price_for_coupon' => $groupedItems->first()->unit_price_for_coupon,
+//                'unit_price_for_point' => $groupedItems->first()->unit_price_for_point,
+//                'coupon' => $groupedItems->first()->coupon,
+//
+//                'spiner' => $groupedItems->map(function ($item) {
+//                    return [
+//                        'label_title' => $item->label_title,
+//                        'label_value' => $item->label_value,
+//                        'label_color' => $item->label_color,
+//                        'spiner_data_id' => $item->spiner_data_id,
+//                        'init_prize'=>$item->init_prize,
+//                        'available_prize'=>$item->available_prize,
+//                        'is_wining_label'=>$item->is_wining_label,
+//                    ];
+//                })->toArray(),
+//            ];
+//        })->values()->first();
+//
+//
+//        return view('luminouslabs::edit', compact('result', 'cards'));
+//    }
+//
+//    public function update(Request $request,)
+//    {
+//
+//        $campaignData = $request->all();
+//        $campaign_id = request()->id;
+//
+//        DB::table('campaigns')->where('id', $campaign_id)->update([
+//            'name' => $campaignData['name'],
+//            'card_id' => $campaignData['card_id'],
+//            'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
+//            'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
+//            'unit_price_for_coupon' => $request->unit_price_for_coupon,
+//            'unit_price_for_point' => $request->unit_price_for_point,
+//            'coupon' => isset($request->coupon) ? $request->coupon : null,
+//        ]);
+//
+//        foreach ($campaignData['label_title'] as $key => $item){
+//            $checkBox = $campaignData['is_wining_label'][$key] == 1 ? true : false;
+//            DB::table('spiner_data')->updateOrInsert(['id'=>$campaignData['spinner_id'][$key]],[
+//                    'cam_id' => $campaign_id,
+//                    'label_title' =>$campaignData['label_title'][$key],
+//                    'label_value' =>$campaignData['label_value'][$key],
+//                    'label_color' =>$campaignData['label_color'][$key],
+//                    'init_prize' =>isset($campaignData['init_prize'][$key]) ? $campaignData['init_prize'][$key] : 0,
+//                    'available_prize' =>isset($campaignData['available_prize'][$key]) ? $campaignData['available_prize'][$key] : 0,
+//                    //'is_wining_label' =>isset($campaignData['is_wining_label'][$key]) && $campaignData['is_wining_label'][$key] == '1' ? true : false,
+//                    'is_wining_label' =>$checkBox,
+//                ]);
+//        }
+//
+//        /*if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['spiner_title_id']) && isset($campaignData['init_prize']) && isset($campaignData['available_prize']) && isset($campaignData['is_wining_label'])) {
+//           return "return interif";
+//            // Get the number of items in the label arrays
+//            $numItems = count($campaignData['label_title']);
+//            for ($i = 0; $i < $numItems; $i++) {
+//                $spinerId = $campaignData['spiner_title_id'][$i];
+//                $spinerData = [
+//                    'cam_id' => $campaign_id,
+//                    'label_title' => $campaignData['label_title'][$i],
+//                    'label_value' => $campaignData['label_value'][$i],
+//                    'label_color' => $campaignData['label_color'][$i],
+//                    'is_wining_label' => isset($campaignData['is_wining_label'][$i]) && $campaignData['is_wining_label'][$i] == 'on' ? true : false,
+//                    'init_prize' => isset($campaignData['init_prize'][$i]) ? $campaignData['init_prize'][$i] : 0,
+//                    'available_prize' => isset($campaignData['available_prize'][$i]) ? $campaignData['available_prize'][$i] : 0,
+//                ];
+//
+//                return $numItems;
+//
+//                DB::table('spiner_data')->updateOrInsert(
+//                    ['id' => $spinerId, 'cam_id' => $campaign_id],
+//                    $spinerData
+//                );
+//            }
+//        }*/
+//
+//        //return "return outer if ";
+//
+//        return redirect()->route('luminouslabs::partner.campain.manage');
+//    }
+
+
     public function edit($id)
     {
 
@@ -170,7 +341,7 @@ class CampainController extends Controller
         $data = DB::table('campaigns')
             ->where('campaigns.id',  request()->id)
             ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
-            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
+            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color','spiner_data.init_prize','spiner_data.available_prize','spiner_data.is_wining_label')
             ->get();
 
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
@@ -189,6 +360,9 @@ class CampainController extends Controller
                         'label_title' => $item->label_title,
                         'label_value' => $item->label_value,
                         'label_color' => $item->label_color,
+                        'init_prize' => $item->init_prize,
+                        'available_prize' => $item->available_prize,
+                        'is_wining_label' => $item->is_wining_label,
                         'spiner_data_id' => $item->spiner_data_id,
                     ];
                 })->toArray(),
@@ -200,9 +374,11 @@ class CampainController extends Controller
 
     public function update(Request $request,)
     {
-
         $campaignData = $request->all();
         $campaign_id = request()->id;
+
+
+        
 
         DB::table('campaigns')->where('id', $campaign_id)->update([
             'name' => $campaignData['name'],
@@ -212,38 +388,68 @@ class CampainController extends Controller
             'unit_price_for_coupon' => $request->unit_price_for_coupon,
             'unit_price_for_point' => $request->unit_price_for_point,
             'coupon' => isset($request->coupon) ? $request->coupon : null,
+            'campaign_type' => $request->campaign_type,
         ]);
 
-        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['spiner_title_id'])) {
-            // Get the number of items in the label arrays
-            $numItems = count($campaignData['label_title']);
-            for ($i = 0; $i < $numItems; $i++) {
-                $spinerId = $campaignData['spiner_title_id'][$i];
-                $spinerData = [
-                    'cam_id' => $campaign_id,
-                    'label_title' => $campaignData['label_title'][$i],
-                    'label_value' => $campaignData['label_value'][$i],
-                    'label_color' => $campaignData['label_color'][$i],
-                ];
 
-                DB::table('spiner_data')->updateOrInsert(
-                    ['id' => $spinerId, 'cam_id' => $campaign_id],
-                    $spinerData
-                );
-            }
+
+        $campData = Campaign::findOrFail($campaign_id);
+
+        foreach ($request->label_title as $i => $value){
+            $data[] = [
+                'cam_id' =>  $campaign_id,
+                'campaign_id' => $campaign_id,
+                'label_title' => $request->label_title[$i],
+                'label_value' => $request->label_value[$i],
+                'label_color' => $request->label_color[$i],
+                'init_prize' => isset($request->init_prize[$i]) ? $request->init_prize[$i] : 0,
+                'available_prize' => isset($request->available_prize[$i]) ? $request->available_prize[$i] : 0,
+                'is_wining_label' => isset($request->is_wining_label[$i]) && $request->is_wining_label[$i] == 'on' ? true : false
+            ];
         }
+
+
+        $campData->spinnerData()->delete();
+        $campData->spinnerData()->createMany($data);
+
+
+
+//        if (isset($campaignData['label_title']) && isset($campaignData['label_value']) && isset($campaignData['label_color']) && isset($campaignData['spiner_title_id']) && isset($campaignData['init_prize']) && isset($campaignData['available_prize']) && isset($campaignData['is_wining_label'])) {
+//            // Get the number of items in the label arrays
+//            $numItems = count($campaignData['label_title']);
+//            for ($i = 0; $i < $numItems; $i++) {
+//                $spinerId = $campaignData['spiner_title_id'][$i] ?? null;
+//                $spinerData = [
+//                    'cam_id' => $campaign_id,
+//                    'label_title' => $campaignData['label_title'][$i],
+//                    'label_value' => $campaignData['label_value'][$i],
+//                    'label_color' => $campaignData['label_color'][$i],
+//                    'init_prize' => $campaignData['init_prize'][$i] ?? null,
+//                    'available_prize' => $campaignData['available_prize'][$i] ??  null,
+//                    'is_wining_label' => isset($campaignData['is_wining_label'][$i]) && $campaignData['is_wining_label'][$i] == 'on' ? true : false,
+//                ];
+//
+//                DB::table('spiner_data')->updateOrInsert(
+//                    ['id' => $spinerId, 'cam_id' => $campaign_id],
+//                    $spinerData
+//                );
+//            }
+//        }
+//
+
+
         return redirect()->route('luminouslabs::partner.campain.manage');
     }
 
+
     public function view($id)
     {
-
         $userId = auth('partner')->user()->id;
         $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
         $data = DB::table('campaigns')
             ->where('campaigns.id',  request()->id)
             ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
-            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color')
+            ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color','spiner_data.init_prize','spiner_data.available_prize','spiner_data.is_wining_label')
             ->get();
 
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
@@ -264,6 +470,9 @@ class CampainController extends Controller
                         'label_value' => $item->label_value,
                         'label_color' => $item->label_color,
                         'spiner_data_id' => $item->spiner_data_id,
+                        'init_prize'=>$item->init_prize,
+                        'available_prize'=>$item->available_prize,
+                        'is_wining_label' => $item->is_wining_label,
                     ];
                 })->toArray(),
             ];
@@ -272,9 +481,44 @@ class CampainController extends Controller
         return view('luminouslabs::view', compact('result', 'cards'));
     }
 
+    public function campainWinners(Request $request)
+    {
+        $campaginId = $request->id;
+        $partnerId = auth('partner')->user()->id;
+
+
+        $memberCards = DB::table('member_cards')
+            ->select('member_cards.*','members.name','members.email')
+            ->join('members','member_cards.member_id','=','members.id')
+            ->where(['campagin_id'=>$campaginId , 'partner_id' => $partnerId])
+            ->get();
+
+//        $campagin = DB::table('campaigns')
+//            ->where(['id'=>$request->id])
+//            ->first();
+//
+//        $campaginCard = DB::table('cards')
+//            ->select('name')
+//            ->where('id',$campagin->card_id)
+//            ->first();
+//
+//
+//        $winners = DB::table('campaign_member')
+//            ->select('campaign_member.campaign_id','campaign_member.member_id','campaign_member.spinner_round','campaign_member.rewards','members.name','members.email','member_cards.spinner_point')
+//            ->join('members','members.id','=','campaign_member.member_id')
+//            ->join('member_cards','member_cards.member_id','=','campaign_member.member_id')
+//            ->where('campaign_id',$request->id)
+//            ->where('is_claimed',true)
+//            ->get();
+
+//        $winnerPoint = DB::table('member_cards')
+//            ->where('member_id)
+
+        return view('luminouslabs::winners',compact('memberCards'));
+    }
+
     public function delete($id)
     {
-
         try {
             DB::table('campaigns')->where('id', request()->id)->delete();
             DB::table('spiner_data')->where('cam_id', request()->id)->delete();

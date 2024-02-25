@@ -266,7 +266,7 @@ $routeDataDefinition = (isset($dataDefinition)) ? $dataDefinition->name : null;
                                 <li>
                                     <a class="ll-sidebar-link flex items-center p-2 group @if ($routeDataDefinition == 'members') active @endif" href="{{ route('partner.data.list', ['name' => 'members']) }}"><x-ui.icon icon="user-group" class="" /><span class="ml-2">{{ trans('common.members') }}</span></a>
                                 </li>
-                                
+
                                 <li>
                                     <a class="ll-sidebar-link flex items-center p-2 group @if (Str::startsWith($routeName, 'partner.analytics')) active @endif" href="{{ route('partner.analytics') }}"><x-ui.icon icon="presentation-chart-line" class="" /><span class="ml-2">{{ trans('common.analytics') }}</span></a>
                                 </li>
@@ -299,10 +299,10 @@ $routeDataDefinition = (isset($dataDefinition)) ? $dataDefinition->name : null;
 
     <script>
         const header = document.getElementById("member-header");
-        
+
         const pathsToCheck = ["/login", "/password"];
         const currentPathname = window.location.pathname;
-        
+
         if (pathsToCheck.some(path => currentPathname.includes(path))) {
             header.style.display = "none";
         }

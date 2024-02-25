@@ -5,7 +5,7 @@
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <section class="">
-    
+
     <div class="relative dark:bg-gray-800 m-0 px-5">
 
      <div class="px-0 py-3">
@@ -17,7 +17,7 @@
               </svg>
               Campaign List
            </h5>
-          
+
         </div>
         <div class="ll-main-content-container w-full flex flex-row items-center justify-between gap-x-7">
            <div class="w-full">
@@ -45,11 +45,15 @@
      </div>
      <div class="overflow-x-auto">
         <form method="POST" id="formDataDefinition">
-           <input type="hidden" name="_token" value="jPi21vaDu3Zyn6EwaGV3e9umi5PDkcuwCGIINyct" autocomplete="off">            
+           <input type="hidden" name="_token" value="jPi21vaDu3Zyn6EwaGV3e9umi5PDkcuwCGIINyct" autocomplete="off">
            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400" id="tableDataDefinition">
               <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                  <tr>
-                  
+
+                     <th scope="col" class=" py-3  px-6 whitespace-nowrap">
+                         Campaign ID
+                     </th>
+
                      <th scope="col" class=" py-3  px-6 whitespace-nowrap">
                           Campaign Name
                      </th>
@@ -70,22 +74,23 @@
                         Point Check
                      </th>
 
-                    
+
                     <th scope="col" class=" py-3  px-6 whitespace-nowrap text-center lg-only:hidden">
                         Active
                     </th>
-                 
+
                     <th scope="col" class="px-6 py-3 text-right">
                        Actions
                     </th>
                  </tr>
               </thead>
-              
+
               <tbody>
                 @foreach ($campainData as $data)
-                    
+
                   <tr class="border-b dark:border-gray-700 hover:bg-gray-100 bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50" :class="selected[0] ? 'bg-gray-200 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-800' : 'bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50'">
-                    
+
+                    <td class="text-center">  {{ $data->id }}</td>
                     <td>  {{ $data->name }}</td>
                     <td>  {{ $data->card_id }}</td>
                     <td>  {{ $data->campain_code }}</td>
@@ -119,17 +124,17 @@
                        </div>
                      </td>
                   </tr>
-            
+
                 @endforeach
 
               </tbody>
            </table>
         </form>
      </div>
-     
-     
+
+
      </div>
-     
+
      <script>
 
       function deleteItem(id, item) {

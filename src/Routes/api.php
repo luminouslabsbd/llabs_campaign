@@ -22,21 +22,21 @@ Route::prefix('{locale}/v1/ll')->group(function () {
         Route::post('login', [LLMemberAuthController::class, 'login']);
         Route::post('register', [LLMemberAuthController::class, 'register']);
     });
+
     // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
     Route::get('get-whatsapp-link', [LinkShareController::class, 'QrGenerator']);
     //Get all data after scan
     Route::get('scaned/{hash_id}', [LinkShareController::class, 'QrCodeScaned'])->name('qr-scaned');
 
-    // Return additional data
-    Route::get('/user-campaign-qr-data', [LinkShareController::class, 'userCampaignQrData']);
-
     //Member spinner Api's
     Route::post('get/spinned-rewards', [MemberSpinHandlerController::class, 'gotSpinned'])->middleware('auth:member_api');
 
-    //Update Member Reward counting
-    Route::get('/update-spinned-rewards/{id}',[LinkShareController::class, 'updateSpinnedRewards']);
-    //Get Member All Winning Rewards
-    Route::post('/get-winning-rewards',[LinkShareController::class, 'getWinningRewards']);
 
+    // Return additional data
+    Route::get('/user-campaign-qr-data', [LinkShareController::class, 'userCampaignQrData']);
+
+
+    Route::get('/update-spinned-rewards/{id}/{hashId}',[LinkShareController::class, 'updateSpinnedRewards']);
+    Route::post('/get-winning-rewards',[LinkShareController::class, 'getWinningRewards']);
 });

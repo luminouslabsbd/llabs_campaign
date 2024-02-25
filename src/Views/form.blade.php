@@ -205,7 +205,7 @@
 
                             <div class="ll-checkbox">
                                 <span class="label-title">Campaign Type Setting</span>
-                                <input type="radio" id="price_check" name="campaign_type" value="only_prize">
+                                <input type="radio" id="price_check" name="campaign_type" checked value="only_prize">
                                 <label for="price_check">Only Prize</label><br>
                                 <input type="radio" id="point_check" name="campaign_type" value="prize_and_point">
                                 <label for="point_check">Prize & Point</label><br>
@@ -216,10 +216,9 @@
 
                         <div class="spinner-form-wrapper">
                             <div class="title">
-                                <h4>Spinner Settings</label>
-                                    <button type="button" id="add-input">+ Add Input</button>
+                                <h4 class="" style="color: white;">Spinner Settings</h4>
+                                <button type="button" id="add-input">+ Add Input</button>
                             </div>
-
                             <div
                                 class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
                                 <div class="w-full sm:w-2/12">
@@ -243,19 +242,19 @@
                                 <div class="w-full sm:w-1/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Init prize</span>
-                                        <input type="number" name="init_prize[]" class="rounded form-input" />
+                                        <input type="number" name="init_prize[0]" class="rounded form-input" />
                                     </label>
                                 </div>
                                 <div class="w-full sm:w-1/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Available prize</span>
-                                        <input type="number" name="available_prize[]" class="rounded form-input" />
+                                        <input type="number" name="available_prize[0]" class="rounded form-input" />
                                     </label>
                                 </div>
                                 <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Is wining label</span>
-                                        <input type="checkbox" name="is_wining_label[]" class="rounded" />
+                                        <input type="checkbox" name="is_wining_label[0]" class="rounded" />
                                     </label>
                                 </div>
                                 <button type="button" style="margin-bottom: 0px"
@@ -269,7 +268,6 @@
                             <button type="submit" class="w-full btn-primary ll-primary-btn"
                                 style="max-width: 200px; width: 100%;">Save</button>
                         </div>
-
 
                     </form>
 
@@ -293,47 +291,46 @@
                 // var newInput = '<div class="input-container"><input type="text" name="dynamicInput[]" class="dynamic-input" /><button type="button" class="remove-input">Remove</button></div>';
                 var newInput =
                     `
-                    <div
-                                class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
-                                <div class="w-full sm:w-2/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Label Title</span>
-                                        <input type="text" name="label_title[]" class=" form-input rounded" />
-                                    </label>
-                                </div>
-                                <div class="w-full sm:w-2/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Label Value</span>
-                                        <input type="text" name="label_value[]" class="form-input rounded" />
-                                    </label>
-                                </div>
-                                <div class="w-full sm:w-2/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Label Color</span>
-                                        <input type="color" name="label_color[]" class="rounded form-input" />
-                                    </label>
-                                </div>
-                                <div class="w-full sm:w-1/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Init prize</span>
-                                        <input type="number" name="init_prize[${index}]" class="rounded form-input" />
-                                    </label>
-                                </div>
-                                <div class="w-full sm:w-1/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Available prize</span>
-                                        <input type="number" name="available_prize[${index}]" class="rounded form-input" />
-                                    </label>
-                                </div>
-                                <div class="w-full sm:w-2/12">
-                                    <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Is wining label</span>
-                                        <input type="checkbox" name="is_wining_label[${index}]" class="rounded" />
-                                    </label>
-                                </div>
-                                <button type="button" style="margin-bottom: 0px"
-                                    class="w-full sm:w-1/12 remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
-                            </div>`;
+                    <div class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
+                        <div class="w-full sm:w-2/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Label Title</span>
+                                <input type="text" name="label_title[]" class=" form-input rounded" />
+                            </label>
+                        </div>
+                        <div class="w-full sm:w-2/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Label Value</span>
+                                <input type="text" name="label_value[]" class="form-input rounded" />
+                            </label>
+                        </div>
+                        <div class="w-full sm:w-2/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Label Color</span>
+                                <input type="color" name="label_color[]" class="rounded form-input" />
+                            </label>
+                        </div>
+                        <div class="w-full sm:w-1/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Init prize</span>
+                                <input type="number" name="init_prize[${index}]" class="rounded form-input" />
+                            </label>
+                        </div>
+                        <div class="w-full sm:w-1/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Available prize</span>
+                                <input type="number" name="available_prize[${index}]" class="rounded form-input" />
+                            </label>
+                        </div>
+                        <div class="w-full sm:w-2/12">
+                            <label class="flex flex-col gap-2">
+                                <span class=" text-gray-700">Is wining label</span>
+                                <input type="checkbox" name="is_wining_label[${index}]" class="rounded" />
+                            </label>
+                        </div>
+                        <button type="button" style="margin-bottom: 0px"
+                            class="w-full sm:w-1/12 remove-input bg-red-500 text-white hover:border hover:border-red-500 hover:text-red-500">Remove</button>
+                    </div>`;
 
                 $("#input-container").append(newInput);
                 index++;

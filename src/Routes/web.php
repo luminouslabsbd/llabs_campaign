@@ -25,10 +25,12 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as
     Route::get('cards-manage', [CampainController::class, 'cardsManage'])->name('partner.cards.manage');
     Route::post('store-card', [CampainController::class, 'storeCard'])->name('partner.card.store');
     Route::get('campain-setup-create', [CampainController::class, 'create'])->name('partner.campain.create');
-    Route::post('campain-setup-storge', [CampainController::class, 'CampaignStorge'])->name('partner.campain.storge');
+    Route::post('campain-setup-storge', [CampainController::class, 'store'])->name('partner.campain.storge');
+    //Route::post('campain-setup-storge', [CampainController::class, 'CampaignStorge'])->name('partner.campain.storge');
     Route::get('/campain-edit/{id}', [CampainController::class, 'edit'])->name('partner.campain.edit');
     Route::post('/campain-update/{id}', [CampainController::class, 'update'])->name('partner.campain.update');
     Route::get('/campain-view/{id}', [CampainController::class, 'view'])->name('partner.campain.view');
+    Route::get('/campain-winners/{id}',[CampainController::class, 'campainWinners'])->name('partner.campain.winners');
     Route::post('/campain-delete/{id}', [CampainController::class, 'delete'])->name('partner.campain.delete');
     Route::post('/campain-spiner-remove/{id}', [CampainController::class, 'campain_spiner_id_remove'])->name('partner.campain_spiner_remove');
 });

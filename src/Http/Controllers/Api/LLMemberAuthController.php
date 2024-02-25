@@ -24,7 +24,6 @@ class LLMemberAuthController extends Controller
 
     public function register(Request $request, MemberService $memberService)
     {
-
         // Get the raw content from the request
         $rawData = $request->getContent();
         // Decode the raw JSON data
