@@ -168,6 +168,16 @@
                         </div>
 
                         <div class="mt-4">
+                            <label for="name" class="input-label">Template</label>
+                            <select class="form-select" required name="template_id" aria-label="Default select example">
+                                <option selected>Select Your Template</option>
+                                @foreach ($templates as $template)
+                                    <option {{ $template['id'] == $result['template_id'] ? 'selected' : ''}} value="{{ $template['id'] }}">Template - {{ $template['id'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mt-4">
                             <label for="unit_price_for_coupon" class="input-label">Unit Price For Coupon</label>
                             <input
                                 type="number"

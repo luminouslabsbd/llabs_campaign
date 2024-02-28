@@ -17,6 +17,7 @@ class CreateCampaignsTable extends Migration
             $table->id(); // Auto-incremental primary key
             $table->string('name');
             $table->string('card_id');
+            $table->bigInteger('template_id')->nullable();
             $table->string('price_check')->nullable();
             $table->string('point_check')->nullable();
             $table->string('tenant_id');

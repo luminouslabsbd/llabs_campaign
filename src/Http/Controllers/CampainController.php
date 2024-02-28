@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Http;
 use App\Notifications\Member\Registration;
 use Illuminate\Validation\ValidationException;
 use Luminouslabs\Installer\Models\Campaign;
+use Luminouslabs\Installer\Models\SpinCampagin;
+use Luminouslabs\Installer\Models\SpinMember;
+use Luminouslabs\Installer\Models\SpinReward;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Validator;
 
@@ -81,15 +84,26 @@ class CampainController extends Controller
 
     public function create(Request $request)
     {
-        $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
-        return view('luminouslabs::form', compact('cards'));
+        $user= auth('partner')->user();
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $user->id)->select('id', 'name', 'unique_identifier')->get();
+
+       $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
+
+       if ($response->successful()) {
+            $templates = $response->json();
+            return view('luminouslabs::form', compact('cards','templates'));
+        } else {
+            return "fail to fetch";
+            return back()->withErrors(['error' => 'Failed to fetch templates']);
+        }
+
+        //return view('luminouslabs::form', compact('cards','tempaltes'));
     }
 
 
     public function store(Request $request)
     {
-        return $request->all();
+        $request->all();
         $userid = auth('partner')->user()->id;
 
         $rules = [
@@ -122,6 +136,7 @@ class CampainController extends Controller
         $campagin = Campaign::create([
             'name' => $request->name,
             'card_id' => $request->card_id,
+            'template_id' => $request->template_id,
             'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
             'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
             'created_by' =>  $userid,
@@ -336,8 +351,17 @@ class CampainController extends Controller
     public function edit($id)
     {
 
-        $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
+        $user = auth('partner')->user();
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $user->id)->select('id', 'name', 'unique_identifier')->get();
+
+        $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
+        if ($response->successful()) {
+            $templates = $response->json();
+        } else {
+            return "fail to fetch";
+            return back()->withErrors(['error' => 'Failed to fetch templates']);
+        }
+
         $data = DB::table('campaigns')
             ->where('campaigns.id',  request()->id)
             ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
@@ -349,6 +373,7 @@ class CampainController extends Controller
                 'id' => $groupedItems->first()->id,
                 'name' => $groupedItems->first()->name,
                 'card_id' => $groupedItems->first()->card_id,
+                'template_id' => $groupedItems->first()->template_id,
                 'price_check' => $groupedItems->first()->price_check,
                 'point_check' => $groupedItems->first()->point_check,
                 'unit_price_for_coupon' => $groupedItems->first()->unit_price_for_coupon,
@@ -369,7 +394,7 @@ class CampainController extends Controller
             ];
         })->values()->first();
 
-        return view('luminouslabs::edit', compact('result', 'cards'));
+        return view('luminouslabs::edit', compact('result', 'cards','templates'));
     }
 
     public function update(Request $request,)
@@ -378,11 +403,12 @@ class CampainController extends Controller
         $campaign_id = request()->id;
 
 
-        
+
 
         DB::table('campaigns')->where('id', $campaign_id)->update([
             'name' => $campaignData['name'],
             'card_id' => $campaignData['card_id'],
+            'template_id' => $campaignData['template_id'],
             'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
             'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
             'unit_price_for_coupon' => $request->unit_price_for_coupon,
@@ -444,19 +470,29 @@ class CampainController extends Controller
 
     public function view($id)
     {
-        $userId = auth('partner')->user()->id;
-        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $userId)->select('id', 'name', 'unique_identifier')->get();
+        $user = auth('partner')->user();
+        $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $user->id)->select('id', 'name', 'unique_identifier')->get();
         $data = DB::table('campaigns')
             ->where('campaigns.id',  request()->id)
             ->leftJoin('spiner_data', 'campaigns.id', '=', 'spiner_data.cam_id')
             ->select('campaigns.*', 'spiner_data.id as spiner_data_id', 'spiner_data.label_title', 'spiner_data.label_value', 'spiner_data.label_color','spiner_data.init_prize','spiner_data.available_prize','spiner_data.is_wining_label')
             ->get();
 
+        $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
+        if ($response->successful()) {
+            $templates = $response->json();
+        } else {
+            return "fail to fetch";
+            return back()->withErrors(['error' => 'Failed to fetch templates']);
+        }
+
+
         $result = collect($data)->groupBy('id')->map(function ($groupedItems) {
             return [
                 'id' => $groupedItems->first()->id,
                 'name' => $groupedItems->first()->name,
                 'card_id' => $groupedItems->first()->card_id,
+                'template_id' => $groupedItems->first()->template_id,
                 'price_check' => $groupedItems->first()->price_check,
                 'point_check' => $groupedItems->first()->point_check,
                 'unit_price_for_coupon' => $groupedItems->first()->unit_price_for_coupon,
@@ -478,20 +514,22 @@ class CampainController extends Controller
             ];
         })->values()->first();
 
-        return view('luminouslabs::view', compact('result', 'cards'));
+        return view('luminouslabs::view', compact('result', 'cards','templates'));
     }
 
     public function campainWinners(Request $request)
     {
+
         $campaginId = $request->id;
-        $partnerId = auth('partner')->user()->id;
+
+        $members = SpinReward::with(['member'])->where('campaign_id',$campaginId)->get();
 
 
-        $memberCards = DB::table('member_cards')
-            ->select('member_cards.*','members.name','members.email')
-            ->join('members','member_cards.member_id','=','members.id')
-            ->where(['campagin_id'=>$campaginId , 'partner_id' => $partnerId])
-            ->get();
+//        $memberCards = DB::table('member_cards')
+//            ->select('member_cards.*','members.name','members.email')
+//            ->join('members','member_cards.member_id','=','members.id')
+//            ->where(['campagin_id'=>$campaginId , 'partner_id' => $partnerId])
+//            ->get();
 
 //        $campagin = DB::table('campaigns')
 //            ->where(['id'=>$request->id])
@@ -514,7 +552,7 @@ class CampainController extends Controller
 //        $winnerPoint = DB::table('member_cards')
 //            ->where('member_id)
 
-        return view('luminouslabs::winners',compact('memberCards'));
+        return view('luminouslabs::winners',compact('members'));
     }
 
     public function delete($id)

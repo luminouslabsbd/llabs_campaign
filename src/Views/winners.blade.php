@@ -52,6 +52,9 @@
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class=" py-3  px-6 whitespace-nowrap">
+                            Member Id
+                        </th>
+                        <th scope="col" class=" py-3  px-6 whitespace-nowrap">
                             Member Name
                         </th>
                         <th scope="col" class=" py-3  px-6 whitespace-nowrap">
@@ -60,9 +63,6 @@
                         <th scope="col" class=" py-3  px-6 whitespace-nowrap">
                             Rewards
                         </th>
-                        <th scope="col" class=" py-3  px-6 whitespace-nowrap">
-                            Points
-                        </th>
                         {{--<th scope="col" class="px-6 py-3 text-right">
                             Actions
                         </th>--}}
@@ -70,44 +70,46 @@
                 </thead>
 
                 <tbody>
-                @foreach ($memberCards as $winner)
+                    @if(isset($members))
+                        @foreach ($members as $member)
 
-                    <tr class="border-b dark:border-gray-700 hover:bg-gray-100 bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50" :class="selected[0] ? 'bg-gray-200 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-800' : 'bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50'">
+                            <tr class="border-b dark:border-gray-700 hover:bg-gray-100 bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50" :class="selected[0] ? 'bg-gray-200 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-800' : 'bg-white dark:bg-gray-800 dark:hover:bg-gray-900/50'">
 
-                        <td class="px-6 py-4">{{ $winner->name ?? '---' }}</td>
-                        <td>{{ $winner->email ?? '' }}</td>
-                        <td>{{ $winner->spinner_prize ?? '' }}</td>
-                        <td>{{ $winner->spinner_point ?? '' }}</td>
+                                <td class="px-6 py-4">{{ $member->member_id ?? '---' }}</td>
+                                <td>{{ $member->member->name ?? '---' }}</td>
+                                <td>{{ $member->member->email ?? 'Email' }}</td>
+                                <td>{{ $member->reward ?? '' }}</td>
 
-{{--                        <td class="px-6 py-4 text-right">--}}
-{{--                            <div class="flex flex-nowrap justify-end space-x-2">--}}
-{{--                                <div data-tooltip-target="results-tooltip" data-tooltip-placement="top" class="null">--}}
-{{--                                    <a href="" data-fb="tooltip" class="ll-action-btn ll-primary whitespace-nowrap items-center flex px-2 py-2 text-xs border focus:outline-none font-medium rounded text-center">--}}
-{{--                                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">--}}
-{{--                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>--}}
-{{--                                        </svg>--}}
-{{--                                    </a>--}}
-{{--                                </div>--}}
-{{--                                <div data-tooltip-target="results-tooltip-1701717886709" data-tooltip-placement="top" class="null">--}}
-{{--                                    <a href="" data-fb="tooltip" class="ll-action-btn ll-warning whitespace-nowrap items-center flex px-2 py-2 text-xs focus:outline-none font-medium rounded text-center">--}}
-{{--                                        <svg class="h-3.5 w-3.52" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">--}}
-{{--                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>--}}
-{{--                                        </svg>--}}
-{{--                                    </a>--}}
-{{--                                </div>--}}
-{{--                                <div data-tooltip-target="results-tooltip" data-tooltip-placement="top" class="null">--}}
-{{--                                    <a href="javascript:void(0);" data-fb="tooltip" class="ll-action-btn ll-danger whitespace-nowrap items-center flex px-2 py-2 text-xs focus:outline-none font-medium rounded text-center">--}}
-{{--                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">--}}
-{{--                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>--}}
-{{--                                        </svg>--}}
-{{--                                    </a>--}}
-{{--                                </div>--}}
-{{--                            </div>--}}
-{{--                        </td>--}}
-                    </tr>
 
-                @endforeach
+                                {{--                        <td class="px-6 py-4 text-right">--}}
+                                {{--                            <div class="flex flex-nowrap justify-end space-x-2">--}}
+                                {{--                                <div data-tooltip-target="results-tooltip" data-tooltip-placement="top" class="null">--}}
+                                {{--                                    <a href="" data-fb="tooltip" class="ll-action-btn ll-primary whitespace-nowrap items-center flex px-2 py-2 text-xs border focus:outline-none font-medium rounded text-center">--}}
+                                {{--                                        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">--}}
+                                {{--                                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>--}}
+                                {{--                                        </svg>--}}
+                                {{--                                    </a>--}}
+                                {{--                                </div>--}}
+                                {{--                                <div data-tooltip-target="results-tooltip-1701717886709" data-tooltip-placement="top" class="null">--}}
+                                {{--                                    <a href="" data-fb="tooltip" class="ll-action-btn ll-warning whitespace-nowrap items-center flex px-2 py-2 text-xs focus:outline-none font-medium rounded text-center">--}}
+                                {{--                                        <svg class="h-3.5 w-3.52" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">--}}
+                                {{--                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"></path>--}}
+                                {{--                                        </svg>--}}
+                                {{--                                    </a>--}}
+                                {{--                                </div>--}}
+                                {{--                                <div data-tooltip-target="results-tooltip" data-tooltip-placement="top" class="null">--}}
+                                {{--                                    <a href="javascript:void(0);" data-fb="tooltip" class="ll-action-btn ll-danger whitespace-nowrap items-center flex px-2 py-2 text-xs focus:outline-none font-medium rounded text-center">--}}
+                                {{--                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">--}}
+                                {{--                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>--}}
+                                {{--                                        </svg>--}}
+                                {{--                                    </a>--}}
+                                {{--                                </div>--}}
+                                {{--                            </div>--}}
+                                {{--                        </td>--}}
+                            </tr>
 
+                        @endforeach
+                    @endif
                 </tbody>
             </table>
         </form>

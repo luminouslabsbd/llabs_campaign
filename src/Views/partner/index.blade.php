@@ -167,15 +167,15 @@
         // get dates start
         function getDates(dayCount) {
             let previousDays = [];
-    
+
             function formatDate(date) {
                 const options = { month: 'long', day: 'numeric' };
                 return date.toLocaleDateString('en-US', options);
             }
-    
+
             // Get the current date
             const currentDate = new Date();
-    
+
             // get previous days
             for (let i = 0; i < dayCount; i++) {
                 let day = new Date();
@@ -183,15 +183,15 @@
                 const formattedDate = formatDate(day);
                 previousDays.push(formattedDate);
             }
-    
+
             return previousDays.reverse();
         }
         // get dates end
-    
+
         // chart creation start
         function createNewChart(canvas, labels, datasetsData) {
             const ctx = document.getElementById(`${canvas}`);
-    
+
             const data = {
                 labels: labels,
                 datasets: [
@@ -253,7 +253,7 @@
                     }
                 ]
             };
-    
+
             new Chart(ctx, {
                 type: 'line',
                 data: data,
@@ -268,10 +268,10 @@
             });
         }
         // chart creation end
-    
+
         // create chart
         createDayChart('{{ route("luminouslabs::partner.getLastSevenDaysData") }}', 7, 'll-custom-dashboard');
-        
+
         function createDayChart(routeName, days, canvasSelector) {
             $.ajax({
                 url: routeName,
@@ -286,7 +286,7 @@
             });
         }
 
-    // Get Count 
+    // Get Count
     getPartnerCardCount('{{ route("luminouslabs::partner.getDashboardCardCount") }}');
 
     function getPartnerCardCount(routeName) {
@@ -295,7 +295,7 @@
             method: 'GET',
             dataType: 'json',
             success: function(response) {
-                $('.CardViews').text(response.cardsSums.views ?? 0); 
+                $('.CardViews').text(response.cardsSums.views ?? 0);
                 $('.RewardViews').text(response.countDatas.rewardViews[0].totalViews ?? 0);
                 $('.PointsIssued').text(response.cardsSums.number_of_points_issued ?? 0);
                 $('.RewardsClaimed').text(response.cardsSums.number_of_rewards_redeemed ?? 0);
@@ -310,8 +310,8 @@
         });
     }
 
-    
-    
+
+
     });
 </script>
 @stop

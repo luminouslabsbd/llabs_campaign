@@ -39,4 +39,6 @@ Route::prefix('{locale}/v1/ll')->group(function () {
 
     Route::get('/update-spinned-rewards/{id}/{hashId}',[LinkShareController::class, 'updateSpinnedRewards']);
     Route::post('/get-winning-rewards',[LinkShareController::class, 'getWinningRewards']);
+
+    Route::post('partner-campaign-members',[LinkShareController::class,'partnerCampaignMembers']);
 });

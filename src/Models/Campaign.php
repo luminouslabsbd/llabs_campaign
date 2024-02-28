@@ -15,9 +15,14 @@ class Campaign extends Model
     {
         return $this->hasMany(SpinnerData::class,'campaign_id');
     }
-    
+
     public function members()
     {
         return $this->belongsToMany(Member::class, 'campaign_member')->withPivot(['spinner_round']);
+    }
+
+    public function cardMembers()
+    {
+        return $this->hasMany(MemberCard::class,'campagin_id');
     }
 }

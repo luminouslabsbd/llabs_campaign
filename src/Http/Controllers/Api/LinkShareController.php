@@ -3,7 +3,6 @@
 namespace Luminouslabs\Installer\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\MemberCard;
 use App\Models\MemberWallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Request as FacadesReqs;
@@ -14,6 +13,13 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Luminouslabs\Installer\Models\Member;
+use Luminouslabs\Installer\Models\MemberCard;
+use Luminouslabs\Installer\Models\Partner;
+use Luminouslabs\Installer\Models\SpinCampagin;
+use Luminouslabs\Installer\Models\SpinMember;
+use Luminouslabs\Installer\Models\SpinPartner;
+use Luminouslabs\Installer\Models\SpinPoint;
+use Luminouslabs\Installer\Models\SpinReward;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
@@ -44,6 +50,7 @@ class LinkShareController extends Controller
         }
 
         $member = DB::table('members')->where('email', $request['email'])->first();
+
 
         if ($member) {
             $jsonString = json_encode(json_decode($request->getContent()));
@@ -629,32 +636,74 @@ class LinkShareController extends Controller
         $hashId = request()->hashId;
 
         $hash = DB::table('hash_qr_code')->where('id',$hashId)->first();
-        $decodedData = json_decode(Crypt::decrypt($hash->hash));
+         $decodedData = json_decode(Crypt::decrypt($hash->hash));
 
         $campaginMember = DB::table('campaign_member')
             ->where('id',$id)
             ->first();
 
+        $spinPartner = SpinPartner::create([
+            'partner_id' => $decodedData->TenantID
+        ]);
+
+        $spinCampaign= SpinCampagin::create([
+            'spiner_partner_id' => $spinPartner->id,
+            'campaign_id' => $decodedData->CampaignID,
+        ]);
+
+        $spinMember = SpinMember::create([
+            'spiner_campaign_id' => $spinCampaign->id,
+            'campaign_id' => $decodedData->CampaignID,
+            'member_id' => $campaginMember->member_id,
+        ]);
+
+        $spinRewords = SpinReward::create([
+            'spiner_member_id' => $spinMember->id,
+            'member_id' => $campaginMember->member_id,
+            'campaign_member_id' => $campaginMember->id,
+            'campaign_id' => $decodedData->CampaignID,
+            'reward' => $campaginMember->rewards,
+        ]);
+
         $campagin = DB::table('campaigns')
             ->where('id',$campaginMember->campaign_id)
             ->first();
 
+        if ($campagin->campaign_type == 'prize_and_point'){
+            $point = round($decodedData->PurchaseValue / $campagin->unit_price_for_point);
+        }else{
+            $point = 0;
+        }
 
-        $point = round($decodedData->PurchaseValue / $campagin->unit_price_for_point);
+        $existSpinPoint = SpinPoint::where(['campaign_id' => $campaginMember->campaign_id,'member_id' => $campaginMember->member_id])->first();
+
+        if (empty($existSpinPoint)){
+            SpinPoint::create([
+                'campaign_id' => $campaginMember->campaign_id,
+                'member_id' => $campaginMember->member_id,
+                'template_id' => $campagin->template_id,
+                'card_id' => $campagin->card_id,
+                'point' =>$point,
+            ]);
+        }else{
+            $existSpinPoint->update([
+                'point' =>$existSpinPoint->point +  $point,
+            ]);
+        }
 
 
-        $cardMember = MemberCard::where('member_id',$campaginMember->member_id)
-            ->where('card_id',$campagin->card_id)
-            ->first();
-
-        MemberCard::create([
-            'member_id' => $campaginMember->member_id,
-            'partner_id' => $decodedData->TenantID,
-            'card_id' => $campagin->card_id,
-            'campagin_id' => $campagin->id,
-            'spinner_prize' => $campaginMember->rewards,
-            'spinner_point' => !empty($campagin) && $campagin->campaign_type != "only_prize" ? $point : 0,
-        ]);
+//        $cardMember = MemberCard::where('member_id',$campaginMember->member_id)
+//            ->where('card_id',$campagin->card_id)
+//            ->first();
+//
+//        MemberCard::create([
+//            'member_id' => $campaginMember->member_id,
+//            'partner_id' => $decodedData->TenantID,
+//            'card_id' => $campagin->card_id,
+//            'campagin_id' => $campagin->id,
+//            'spinner_prize' => $campaginMember->rewards,
+//            'spinner_point' => !empty($campagin) && $campagin->campaign_type != "only_prize" ? $point : 0,
+//        ]);
 
 //        if (!empty($cardMember)){
 //            $cardMember->update([
@@ -695,5 +744,30 @@ class LinkShareController extends Controller
             ->get();
 
         return $data;
+    }
+
+    public function partnerCampaignMembers(Request $request)
+    {
+        $this->validate($request,[
+           'email'=>'required|email'
+        ]);
+
+        $parther = Partner::where('email',$request->email)->first();
+
+        $members = MemberCard::where('partner_id',$parther->id)->get();
+
+        foreach ($members as $member){
+            $mem = Member::findOrFail($member->member_id);
+            $data [] = [
+                'name'=>$mem->name,
+                'email'=>$mem->email
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Data Get Success",
+            'data' => $data,
+        ]);
     }
 }
