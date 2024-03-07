@@ -5,6 +5,7 @@ namespace Luminouslabs\Installer\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MemberWallet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Request as FacadesReqs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Luminouslabs\Installer\Models\Member;
 use Luminouslabs\Installer\Models\MemberCard;
 use Luminouslabs\Installer\Models\Partner;
@@ -20,6 +22,7 @@ use Luminouslabs\Installer\Models\SpinMember;
 use Luminouslabs\Installer\Models\SpinPartner;
 use Luminouslabs\Installer\Models\SpinPoint;
 use Luminouslabs\Installer\Models\SpinReward;
+use Mockery\Exception;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
@@ -102,6 +105,7 @@ class LinkShareController extends Controller
                 'ProductID' => 'required',
                 'PurchaseValue' => 'required',
                 'email' => 'required|email',
+                'phone' => 'required',
                 'is_login' => 'required|boolean',
             ]);
 
@@ -121,6 +125,7 @@ class LinkShareController extends Controller
             if (empty($member)){
                 $member = Member::create([
                     'email' =>  $request['email'],
+                    'phone' => $request['phone'],
                     'password' => bcrypt('12345678')
                 ]);
             }
@@ -153,8 +158,16 @@ class LinkShareController extends Controller
     //This will be call when QR is scaned
     public function QrCodeScaned($locale, $id)
     {
+
+        $id = request()->hash_id;
+        $keos_app = request()->app_token;
+
+
         // Check if the data already exists
-        $existingQRCode = DB::table('hash_qr_code')->find($id);
+        $hashQrCode = DB::table('hash_qr_code')->where('encript_id',$id)->first();
+
+
+        $existingQRCode = DB::table('hash_qr_code')->find($hashQrCode->id);
         if ($existingQRCode) {
             $decodedData = json_decode(Crypt::decrypt($existingQRCode->hash));
             if (is_object($decodedData)) {
@@ -343,14 +356,11 @@ class LinkShareController extends Controller
 //                    $allWallets[]=$data;
 //                }
 
-
-
                 $currentSpin = DB::table('campaign_member')
                     ->where('campaign_id',$codeContents['CampaignID'])
                     ->where('member_id',$member->id)
                     ->where('is_claimed',false)
                     ->first();
-
 
                 if ($currentSpin) {
                     $currentSpin->hashId = $id;
@@ -359,13 +369,27 @@ class LinkShareController extends Controller
                     $codeContents['currentSpin'] = null;
                 }
 
-                return response()->json($codeContents, 200);
+                if ($keos_app == 'keos_app'){
+                    return response()->json($codeContents, 200);
+                }else{
+                    $wpLink = $this->getHashUrl($member->phone,$hashQrCode->encript_id);
+                    return redirect($wpLink);
+                }
+
+
             } else {
                 return response()->json(['message' => 'Users not found', 'status' => 404], 404);
             }
         } else {
             return response()->json(['message' => 'something went wrong', 'status' => 404], 404);
         }
+
+        //Check the qr code come from TapTo Win or not
+
+
+
+
+
     }
 
     public function decodeHash($id)
@@ -388,6 +412,7 @@ class LinkShareController extends Controller
 
     public function makeQRCode($jsonString, $hash)
     {
+
         // dd("ok");
 
         // Check if the data already exists
@@ -403,11 +428,16 @@ class LinkShareController extends Controller
         } else {
             $codeContents = $decodedData;
         }
+
         $e = DB::table('hash_qr_code')->insertGetId([
             'order_id' => $decodedData->OrderID,
             'hash' => $hash,
-            'qr_code_path' => 'a'
+            'qr_code_path' => 'a',
+            'encript_id' => Str::random(7),
         ]);
+
+        $hashEncriptId = DB::table('hash_qr_code')->find($e);
+
         $tempDir = storage_path('app/tmp/');
 
         // Ensure the target directory exists
@@ -440,8 +470,11 @@ class LinkShareController extends Controller
 
         // $codeContents['spinner_details'] = $newObj;
         $qrCodeFileName = uniqid('qr_code_') . '.png';
-        // Generate QR code
-        QrCode::format('png')->size(300)->generate(route('qr-scaned', ['hash_id' => $e]), $tempDir . $qrCodeFileName);
+        // Generate QR code (Old Approce Here Change Hash Id by $hashEncriptId)
+        //QrCode::format('png')->size(300)->generate(route('qr-scaned', ['hash_id' => $e]), $tempDir . $qrCodeFileName);
+
+
+        QrCode::format('png')->size(300)->generate(route('qr-scaned', ['hash_id' => $hashEncriptId->encript_id]), $tempDir . $qrCodeFileName);
 
         $storagePath = 'public/qrcodes/';
         $qrCodePath = $storagePath . $qrCodeFileName;
@@ -472,7 +505,16 @@ class LinkShareController extends Controller
         }
     }
 
-    public function getHashUrl($requestData, $hash)
+    public function getHashUrl($phone, $hash_encript_id)
+    {
+        if ($hash_encript_id && $phone) {
+            $link = 'https://wa.me/' . $phone;
+            $link .= '?text=' . urlencode($hash_encript_id);
+            return $link;
+        }
+    }
+
+    /*public function getHashUrl($requestData, $hash)
     {
         $getData = DB::table('hash_qr_code')->where('hash', $hash)->select('qr_code_path')->first();
 
@@ -496,7 +538,7 @@ class LinkShareController extends Controller
             ];
             return $response;
         }
-    }
+    }*/
 
     public function QrGenerator($data=null)
     {
@@ -570,8 +612,6 @@ class LinkShareController extends Controller
 
         if ($requestData['hash']) {
             $getData = DB::table('hash_qr_code')->where('hash', $requestData['hash'])->first();
-
-
             if (!$getData) {
                 $response = [
                     'status' => 404,
@@ -602,18 +642,72 @@ class LinkShareController extends Controller
                             'remaining_spin' => $available_spin,
                         ]);
                     }
+
                     $remaining_spin = DB::table('member_spinner_count')->where('campaign_id', $dataFromQR->CampaignID)->where('member_id', $user->id)->first();
                     $username = $user->name;
                     $accessToken = $user->createToken('token-for-spin');
+
+
+                    $wpLink = $this->getHashUrl($user->phone,$getData->encript_id);
+
                     $response = [
-                        'available_spin' => $remaining_spin->remaining_spin,
-                        'spin_options' => $labels,
-                        'auth_token' => $accessToken->plainTextToken,
-                        'username' => $username,
                         'status' => 200,
-                        'hash' => $requestData['hash'],
+                        //'available_spin' => $remaining_spin->remaining_spin,
+                        //'spin_options' => $labels,
+                        //'auth_token' => $accessToken->plainTextToken,
+
+                        'encript_id' => $getData->encript_id,
+                        'whatsapp_link' => $wpLink,
+                        'username' => $username,
+                        //'hash' => $requestData['hash'],
                         'path' => $makeQrPath ?? '',
                     ];
+
+
+
+                    //Start Send Whatsapp
+                    /*$userPhone = $user->phone;
+                    if ($userPhone && $requestData['hash']) {
+
+                        $getData = DB::table('hash_qr_code')->where('hash', $requestData['hash'])
+                            ->select('qr_code_path')->first();
+
+                        if ($getData != null) {
+                            $path = $getData->qr_code_path;
+                        }
+
+                        $link = 'https://wa.me/' . $userPhone;
+
+                        if ($requestData['hash']) {
+                            $link .= '?text=Hello! I want to go for the prize!! Here is my coupon: ' . urlencode($requestData['hash']);
+                        }
+
+                        if ($getData && $link) {
+                            $response = [
+                                'status' => 200,
+                                'hash' => $link ?? '',
+                                'path' => $path,
+                                'number' => $userPhone,
+                            ];
+                            return response()->json($response, 200);
+                        } else {
+                            $response = [
+                                'status' => 202,
+                                'number' => $userPhone,
+                            ];
+                            return response()->json($response, 200);
+                        }
+
+                    } else {
+                        $response = [
+                            'status' => 202,
+                            'error' => 'Wrong data format',
+                        ];
+                        return response()->json($response, 202);
+                    }*/
+                    //Start Send Whatsapp
+
+
                     return $response;
                 }
             }
@@ -629,14 +723,39 @@ class LinkShareController extends Controller
         }
     }
 
+    public function getWhatsappLinkByEncryptedId()
+    {
+        $encriptId = request()->encript_id;
+        if ($encriptId){
+            $hashData = DB::table('hash_qr_code')->where('encript_id',$encriptId)->first();
+            if ($hashData){
+                return response()->json([
+                    'status' => true,
+                    'hash' => $hashData->hash,
+                    'path' => $hashData->qr_code_path,
+                ],200);
+            }else{
+                return response()->json([
+                    'status' => false,
+                    'message' => "Encrypt id is not valid"
+                ],400);
+            }
+        }else{
+            return response()->json([
+               'status' => false,
+               'message' => "Encrypt id is not valid"
+            ],202);
+        }
+    }
 
     public function updateSpinnedRewards()
     {
+
         $id = request()->id;
         $hashId = request()->hashId;
 
-        $hash = DB::table('hash_qr_code')->where('id',$hashId)->first();
-         $decodedData = json_decode(Crypt::decrypt($hash->hash));
+        $hash = DB::table('hash_qr_code')->where('encript_id',$hashId)->first();
+        $decodedData = json_decode(Crypt::decrypt($hash->hash));
 
         $campaginMember = DB::table('campaign_member')
             ->where('id',$id)
@@ -682,16 +801,17 @@ class LinkShareController extends Controller
                 'campaign_id' => $campaginMember->campaign_id,
                 'member_id' => $campaginMember->member_id,
                 'template_id' => $campagin->template_id,
+                'template_pass_type' => $campagin->template_pass_type,
                 'card_id' => $campagin->card_id,
                 'point' =>$point,
             ]);
         }else{
             $existSpinPoint->update([
                 'point' =>$existSpinPoint->point +  $point,
+                'template_id' => $campagin->template_id,
+                'template_pass_type' => $campagin->template_pass_type,
             ]);
         }
-
-
 //        $cardMember = MemberCard::where('member_id',$campaginMember->member_id)
 //            ->where('card_id',$campagin->card_id)
 //            ->first();
@@ -714,6 +834,7 @@ class LinkShareController extends Controller
 //
 //        }
 
+
         $status = DB::table('campaign_member')
             ->where('id',$id)
             ->update(['is_claimed'=>true]);
@@ -723,6 +844,8 @@ class LinkShareController extends Controller
                 'success'=>true,
                 'message'=>'Claimed Update success'
             ]);
+        }else{
+            return "All Ready Update";
         }
     }
 
@@ -753,7 +876,6 @@ class LinkShareController extends Controller
         ]);
 
         $parther = Partner::where('email',$request->email)->first();
-
         $members = MemberCard::where('partner_id',$parther->id)->get();
 
         foreach ($members as $member){
@@ -769,5 +891,59 @@ class LinkShareController extends Controller
             'message' => "Data Get Success",
             'data' => $data,
         ]);
+    }
+
+    public function getUserDetailsByEncriptedId()
+    {
+        $code = request('code');
+        if ($code){
+            $hashData = DB::table('hash_qr_code')->where('encript_id',$code)->orWhere('hash',$code)->first();
+            if ($hashData){
+                $decodedData = json_decode(Crypt::decrypt($hashData->hash));
+                if ($decodedData->email){
+                    $member = DB::table('members')->where('email',$decodedData->email)->first();
+
+                    if($member){
+                        try {
+                            $response = Http::post('http://labcrm.keoscx.com/admin/bangara_module/bangara/create_loyality_customer',[
+                                'email' => $member->email,
+                                'phonenumber' => $member->phone,
+                                'company' => 'company'
+                            ]);
+                        }catch (Exception $exception){
+                            return $exception;
+                        }
+                    }
+
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'User Data',
+                        'data'=>[
+                            'name' => $member->name,
+                            'email' => $member->email,
+                            'phone' => $member->phone,
+                            'crm_customer_id' => $response['crm_customer_id'],
+                        ]
+                    ],200);
+                }
+                else{
+                    return response()->json([
+                        'status' => false,
+                        'message' => "Code is invalid"
+                    ],404);
+                }
+            }
+            else{
+                return response()->json([
+                    'status' => false,
+                    'message' => "Code is invalid"
+                ],404);
+            }
+        }else{
+            return response()->json([
+                'status' => false,
+                'message' => "Code is required"
+            ],404);
+        }
     }
 }

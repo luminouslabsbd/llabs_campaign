@@ -15,4 +15,9 @@ class SpinReward extends Model
     {
         return $this->belongsTo(Member::class, 'member_id');
     }
+
+    public function memberPass()
+    {
+        return $this->belongsTo(SpinPoint::class,'member_id');
+    }
 }

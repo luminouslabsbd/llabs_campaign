@@ -33,6 +33,14 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as
     Route::get('/campain-winners/{id}',[CampainController::class, 'campainWinners'])->name('partner.campain.winners');
     Route::post('/campain-delete/{id}', [CampainController::class, 'delete'])->name('partner.campain.delete');
     Route::post('/campain-spiner-remove/{id}', [CampainController::class, 'campain_spiner_id_remove'])->name('partner.campain_spiner_remove');
+
+
+    Route::get('/template-create/{type}',[CampainController::class,'templateCreate'])->name('partner.template.create');
+    Route::post('/template-store',[CampainController::class,'templateStore'])->name('partner.template.store');
+
+    Route::post('/get-template-info', [CampainController::class,'getTemplateInfo'])->name('partner.template.templateinfo');
+
+    Route::get('/user-template-details/{memberId}',[CampainController::class,'userTemplateDetails'])->name('partner.template.download');
 });
 
 //admin rocket chat setting routes

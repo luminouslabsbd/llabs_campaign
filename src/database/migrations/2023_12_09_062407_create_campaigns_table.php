@@ -18,6 +18,7 @@ class CreateCampaignsTable extends Migration
             $table->string('name');
             $table->string('card_id');
             $table->bigInteger('template_id')->nullable();
+            $table->string('template_pass_type')->nullable();
             $table->string('price_check')->nullable();
             $table->string('point_check')->nullable();
             $table->string('tenant_id');

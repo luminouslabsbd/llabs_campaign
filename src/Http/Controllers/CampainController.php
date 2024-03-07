@@ -12,17 +12,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use App\Notifications\Member\Registration;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Luminouslabs\Installer\Models\Campaign;
 use Luminouslabs\Installer\Models\SpinCampagin;
 use Luminouslabs\Installer\Models\SpinMember;
+use Luminouslabs\Installer\Models\SpinPoint;
 use Luminouslabs\Installer\Models\SpinReward;
+use Luminouslabs\Installer\Service\ApplePassService;
+use Mockery\Exception;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Validator;
 
 
 class CampainController extends Controller
 {
+    public $passKitDataProvider;
+
+    public function __construct(ApplePassService $apple_pass)
+    {
+        $this->passKitDataProvider = $apple_pass;
+    }
+
     public function cardsManage(Request $request)
     {
         // $url = 'https://keoswalletapi.luminousdemo.com/api/get-user-cards?email=' . auth()->user()->email;
@@ -87,6 +98,10 @@ class CampainController extends Controller
         $user= auth('partner')->user();
         $cards = DB::table('cards')->where('is_active', 1)->where('created_by', $user->id)->select('id', 'name', 'unique_identifier')->get();
 
+        if (! ($cards->count() > 0)){
+            return redirect()->route('partner.data.list',['name' => 'cards'])->with("message","You doesn't have any Loyalty Loyalty card.So Please create a card and try again" );
+        }
+
        $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
 
        if ($response->successful()) {
@@ -103,9 +118,15 @@ class CampainController extends Controller
 
     public function store(Request $request)
     {
-        $request->all();
         $userid = auth('partner')->user()->id;
+        $decotedTempalteResponse = json_decode($request->template_response_obj);
+        $pass_data =  json_decode($decotedTempalteResponse->pass_data ?? null);
 
+        $wallet_data = json_decode($request->wallet_obj);
+        $responseData = null;
+
+
+        $wallet_data = json_decode($request->wallet_obj);
         $rules = [
             'name' => 'required|string|max:255',
             'card_id' => 'required|numeric', // Adjust this rule based on your requirements
@@ -126,17 +147,239 @@ class CampainController extends Controller
 
         // Run the validator
         $validator = Validator::make($request->all(), $rules, $messages);
-
         // Check if validation fails
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+        //Campagin Validation
+       if (isset($decotedTempalteResponse)){
+           $google_pass_data = $pass_data->textModulesData ?? null;
+           if ($wallet_data->waletType == 0){
+               $pass_data->passDetails->passId = $decotedTempalteResponse->id ?? null;
+           }else if($wallet_data->waletType == 1){
+               if ($wallet_data->cardType == 0 || $wallet_data->cardType == 2){
+                   $pass_data->Coupon->passDetails->passId = $decotedTempalteResponse->id ?? null;
+               }else if($wallet_data->cardType == 1){
+                   $pass_data->GenericPass->passDetails->passId = $decotedTempalteResponse->id ?? null;
+               }else{
+                   return "Invalide card type";
+               }
+           }else{
+               return "Invalide Pusskit Type";
+           }
 
+           if ($wallet_data->waletType == 0){
+               $pass_data->passDetails->cardTitle = $wallet_data->cardNameVal;
+               $pass_data->passDetails->color = $wallet_data->backgroundColorVal;
+               $pass_data->passDetails->labelColor = $wallet_data->labelColorVal;
+
+               $pass_data->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->passDetails->logoImage;
+               $pass_data->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->passDetails->heroImage;
+
+               if ($google_pass_data->firstRowData){
+                   //return "Esist First";
+                   foreach ($google_pass_data->firstRowData as $key => $value){
+                       //echo "Processing element $key...\n";
+                       if ($key == 0){
+//                    return "exist here fr1";
+//                    echo "Updating label and display value for first element...\n";
+                           $value->label->value = $wallet_data->firstRowFirstElementLabel;
+                           $value->displayValue->value = $wallet_data->firstRowFirstElementVal;
+
+                       } elseif ($key == 1 && isset($value)){
+//                    return "exist here fr2";
+//                    echo "Updating label and display value for second element...\n";
+                           $value->label->value = $wallet_data->firstRowSecondElementLabel;
+                           $value->displayValue->value = $wallet_data->firstRowSecondElementVal;
+                       } else {
+                           if (isset($value)){
+//                        return "exist here fr3";
+//                        echo "Updating label and display value for third element...\n";
+                               $value->label->value = $wallet_data->firstRowThirdElementLabel;
+                               $value->displayValue->value = $wallet_data->firstRowThirdElementVal;
+                           }
+                       }
+                   }
+               }
+               if (isset($google_pass_data->secondRowData)){
+                   foreach ($google_pass_data->secondRowData as $key => $value){
+                       if ($key == 0 && isset($value)){
+                           $value->label->value = $wallet_data->secondRowFirstElementLabel;
+                           $value->displayValue->value = $wallet_data->secondRowFirstElementVal;
+                       }elseif ($key == 1 && isset($value)){
+                           $value->label->value = $wallet_data->secondRowSecondElementLabel;
+                           $value->displayValue->value = $wallet_data->secondRowSecondElementVal;
+                       }else{
+                           if (isset($value)){
+                               $value->label->value = $wallet_data->secondRowThirdElementLabel;
+                               $value->displayValue->value = $wallet_data->secondRowThirdElementVal;
+                           }
+                       }
+                   }
+               }
+               if (isset($google_pass_data->thirdRowData)){
+                   foreach ($google_pass_data->thirdRowData as $key => $value){
+                       if ($key == 0 && isset($value)){
+                           $value->label->value = $wallet_data->thirdRowFirstElementLabel;
+                           $value->displayValue->value = $wallet_data->thirdRowFirstElementVal;
+                       }elseif ($key == 1 && isset($value)){
+                           $value->label->value = $wallet_data->thirdRowSecondlementLabel;
+                           $value->displayValue->value = $wallet_data->thirdRowSecondlementVal;
+                       }else{
+                           if (isset($value)){
+                               $value->label->value = $wallet_data->thirdRowThirdElementLabel;
+                               $value->displayValue->value = $wallet_data->thirdRowThirdElementVal;
+                           }
+                       }
+                   }
+               }
+               if (isset($google_pass_data->fourthRowData)){
+                   foreach ($google_pass_data->fourthRowData as $key => $value){
+                       if ($key == 0 && isset($value)){
+                           $value->label->value = $wallet_data->fourthRowFirstElementLabel;
+                           $value->displayValue->value = $wallet_data->fourthRowFirstElementVal;
+                       }elseif ($key == 1 && isset($value)){
+                           $value->label->value = $wallet_data->fourthRowSecondElementLabel;
+                           $value->displayValue->value = $wallet_data->fourthRowSecondElementVal;
+                       }else{
+                           if (isset($value)){
+                               $value->label->value = $wallet_data->fourthRowThirdElementLabel;
+                               $value->displayValue->value = $wallet_data->fourthRowThirdElementVal;
+                           }
+                       }
+                   }
+               }
+           }else if($wallet_data->waletType == 1){
+               if ($wallet_data->cardType == 0 || $wallet_data->cardType == 2){
+
+
+                   $pass_data->Coupon->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->Coupon->passDetails->logoImage;
+                   $pass_data->Coupon->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->Coupon->passDetails->heroImage;
+
+                   $pass_data->Coupon->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal);
+                   $pass_data->Coupon->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal);
+                   $pass_data->Coupon->passDetails->cardTitle = $wallet_data->cardNameVal;
+
+                   if ($pass_data->Coupon->secondaryFormsData){
+                       foreach ($pass_data->Coupon->secondaryFormsData as $key => $value){
+                           if ($key == 0 && isset($value)){
+                               $value->label->value = $wallet_data->firstRowFirstElementLabel ;
+                               $value->displayValue->value = $wallet_data->firstRowFirstElementVal ;
+                           }else if ($key == 1 && isset($value)){
+                               $value->label->value = $wallet_data->firstRowSecondElementLabel ;
+                               $value->displayValue->value = $wallet_data->firstRowSecondElementVal ;
+                           }else{
+                               if ($value){
+                                   $value->label->value = $wallet_data->firstRowThirdElementLabel ;
+                                   $value->displayValue->value = $wallet_data->firstRowThirdElementVal ;
+                               }
+                           }
+                       }
+                   }
+               }else if($wallet_data->cardType == 1){
+                   $pass_data->GenericPass->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->GenericPass->passDetails->logoImage;
+                   $pass_data->GenericPass->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->GenericPass->passDetails->heroImage;
+                   $pass_data->GenericPass->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal);
+                   $pass_data->GenericPass->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal);
+                   $pass_data->GenericPass->passDetails->cardTitle = $wallet_data->cardNameVal;
+
+                   if ($pass_data->GenericPass->primaryFormsData){
+                       $pass_data->GenericPass->primaryFormsData->label->value  = $wallet_data->firstRowFirstElementLabel;
+                       $pass_data->GenericPass->primaryFormsData->displayValue->value  = $wallet_data->firstRowFirstElementVal;
+                   }
+
+                   if ($pass_data->GenericPass->secondaryFormsData){
+                       foreach ($pass_data->GenericPass->secondaryFormsData as $key => $value){
+                           if ($key == 0 && isset($value)){
+                               $value->label->value = $wallet_data->secondRowFirstElementLabel ;
+                               $value->displayValue->value = $wallet_data->secondRowFirstElementVal ;
+                           }else if ($key == 1 && isset($value)){
+                               $value->label->value = $wallet_data->secondRowSecondElementLabel ;
+                               $value->displayValue->value = $wallet_data->secondRowSecondElementVal ;
+                           }else{
+                               if ($value){
+                                   $value->label->value = $wallet_data->secondRowThirdElementLabel ;
+                                   $value->displayValue->value = $wallet_data->secondRowThirdElementVal ;
+                               }
+                           }
+                       }
+                   }
+
+                   if ($pass_data->GenericPass->auxiliaryFormsData){
+                       foreach ($pass_data->GenericPass->auxiliaryFormsData as $key => $value){
+                           if ($key == 0 && isset($value)){
+                               $value->label->value = $wallet_data->thirdRowFirstElementLabel ;
+                               $value->displayValue->value = $wallet_data->thirdRowFirstElementVal ;
+                           }else if ($key == 1 && isset($value)){
+                               $value->label->value = $wallet_data->thirdRowSecondElementLabel ;
+                               $value->displayValue->value = $wallet_data->thirdRowSecondElementVal ;
+                           }else{
+                               if ($value){
+                                   $value->label->value = $wallet_data->thirdRowThirdElementLabel ;
+                                   $value->displayValue->value = $wallet_data->thirdRowThirdElementVal ;
+                               }
+                           }
+                       }
+                   }
+
+               }else{
+                   return "Invalide card type";
+               }
+           }else{
+               return "Invalide Pusskit Type";
+           }
+           try {
+               if ($wallet_data->waletType == 0){
+                   $url = "https://keoswalletapi.luminousdemo.com/api/google-generate-pass/loyalty";
+               }else if($wallet_data->waletType == 1){
+                   $url = "https://keoswalletapi.luminousdemo.com/api/apple-generate-pass/loyalty";
+               }else{
+                   return "invalide type";
+               }
+               $response = Http::post($url,$pass_data);
+               $responseData = json_decode($response, true);
+           }catch (Exception $exception){
+               return $exception;
+           }
+       }
+       else{
+           $passFormatedData = $this->passKitDataProvider->getFormate($wallet_data);
+           try {
+               if ($wallet_data->waletType == 0){
+                   $url = "https://keoswalletapi.luminousdemo.com/api/google-generate-pass/loyalty";
+               }else if($wallet_data->waletType == 1){
+                   $url = "https://keoswalletapi.luminousdemo.com/api/apple-generate-pass/loyalty";
+               }else{
+                   return "invalide type";
+               }
+               $response = Http::post($url,$passFormatedData);
+               $responseData = json_decode($response, true);
+               //return $responseData;
+           }catch (Exception $exception){
+               return $exception;
+           }
+       }
+
+       if (isset($responseData['data']['id']) && isset($responseData['data']['pass_type'])){
+           $updatedTemplateId = $responseData['data']['id'];
+           $updatedTemplateType = $responseData['data']['pass_type'];
+       }elseif (isset($responseData['data']['existingRecord_id']) && isset($responseData['data']['exits_pass_type'])){
+           $updatedTemplateId = $responseData['data']['existingRecord_id'];
+           $updatedTemplateType = $responseData['data']['exits_pass_type'];
+       }
+
+        /*$templateInfo = $request->template_info;
+        $template_parts = explode('|', $templateInfo);
+        $template_id = $updatedTemplateId ?? $template_parts[0] ?? null;
+        $pass_type = $updatedTemplateType ?? $template_parts[1] ?? null;
+        return $template_id;
+        exit();*/
 
         $campagin = Campaign::create([
             'name' => $request->name,
             'card_id' => $request->card_id,
-            'template_id' => $request->template_id,
+            'template_id' => $updatedTemplateId ?? $decotedTempalteResponse->id,
+            'template_pass_type' => $updatedTemplateType ?? $decotedTempalteResponse->pass_type,
             'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
             'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
             'created_by' =>  $userid,
@@ -164,10 +407,17 @@ class CampainController extends Controller
             ];
         }
 
-
-
         $campagin->spinnerData()->createMany($data);
 
+        /*try {
+            $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-data-from-loyalty-for-edit',[
+                'pass_id' => $template_id,
+                'pass_type' => $pass_type
+            ]);
+        $res = json_decode($response);
+        }catch (e){
+            return e;
+        }*/
 
         return redirect()->route('luminouslabs::partner.campain.manage');
     }
@@ -404,11 +654,16 @@ class CampainController extends Controller
 
 
 
+        $templateInfo = $request->template_info;
+        $template_parts = explode('|', $templateInfo);
+        $template_id = $template_parts[0] ?? null;
+        $pass_type = $template_parts[1] ?? null;
 
         DB::table('campaigns')->where('id', $campaign_id)->update([
             'name' => $campaignData['name'],
             'card_id' => $campaignData['card_id'],
-            'template_id' => $campaignData['template_id'],
+            'template_id' => $template_id,
+            'template_pass_type' => $pass_type,
             'price_check' => isset($request->campaign_type) && $request->campaign_type == 'only_prize' ? $request->campaign_type : '',
             'point_check' => isset($request->campaign_type) && $request->campaign_type == 'prize_and_point' ? $request->campaign_type : '',
             'unit_price_for_coupon' => $request->unit_price_for_coupon,
@@ -522,8 +777,7 @@ class CampainController extends Controller
 
         $campaginId = $request->id;
 
-        $members = SpinReward::with(['member'])->where('campaign_id',$campaginId)->get();
-
+        $members = SpinReward::with(['member','memberPass'])->where('campaign_id',$campaginId)->get();
 
 //        $memberCards = DB::table('member_cards')
 //            ->select('member_cards.*','members.name','members.email')
@@ -623,5 +877,132 @@ class CampainController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to delete data', 'message' => $e->getMessage()], 500);
         }
+    }
+
+
+
+    public function readGoogleJson($type)
+    {
+        if ($type == 'google'){
+            $path = public_path('google.json');
+        }else if($type == 'apple'){
+            $path = public_path('apple.json');
+        }else{
+            return "Type Not Found";
+        }
+
+        if (file_exists($path)) {
+           return  $contents = file_get_contents($path);
+        } else {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+    }
+
+    public function templateCreate()
+    {
+        $type = request('type');
+        $data = $this->readGoogleJson($type);
+
+//        $jsonData = '{ "passDetails": { "logoImage": "", "heroImage": "", "color": "rgb(30, 49, 129)", "labelColor": "rgb(255, 255, 255)", "formate": "QR_CODE", "barcodeValue": "", "passTypeIdentifier": "", "passId": "", "header": "My Organization", "cardTitle": "My Loyalty Card", "activeCardName": "GenericPass" }, "textModulesData": { "firstRowData": [ { "id": 4, "expirySettings": { "label": "Expiry Settings", "value": "Not Expired" }, "displayValue": { "label": "Date Format", "value": "2025-02-11T09:54:44+00:00" }, "label": { "label": "Label", "value": "Expiry Date", "baseValue": "Expiry Date" } }, { "id": 14, "label": { "label": "Label", "value": "Name", "baseValue": "Name" }, "displayValue": { "label": "Display Value", "value": "Muilon" } }, { "id": 140, "label": { "label": "Label", "value": "Name", "baseValue": "Name" }, "displayValue": { "label": "Display Value", "value": "Rawshan" } } ], "secondRowData20": [ { "id": 132, "label": { "label": "Label", "value": "Mobile Number", "baseValue": "Mobile Number" }, "displayValue": { "label": "Display Value", "value": "0166" } }, { "id": 142, "label": { "label": "Label", "value": "Name", "baseValue": "Name" }, "displayValue": { "label": "Display Value", "value": "Sajjad" } } ], "secondRowData2": [ { "id": 130, "label": { "label": "Label", "value": "Mobile Number", "baseValue": "Mobile Number" }, "displayValue": { "label": "Display Value", "value": "0177" } }, { "id": 1400, "label": { "label": "Label", "value": "Name", "baseValue": "Name" }, "displayValue": { "label": "Display Value", "value": "Shakib" } } ], "secondRowData200": [ { "id": 1320, "label": { "label": "Label", "value": "Mobile Number", "baseValue": "Mobile Number" }, "displayValue": { "label": "Display Value", "value": "0199" } } ] }, "userId": 1, "id": "3388000000022308850", "classId": "3388000000022308850" }';
+//        $data = json_decode($jsonData, true);
+
+        return view('luminouslabs::create-template',[
+            'data' => $data,
+            'type' => $type,
+        ]);
+    }
+
+    public function templateStore(Request $request)
+    {
+        $type = $request->pass_type;
+        $data = $request->google_data;
+        $dataArray = json_decode($data, true);
+
+        try {
+            if ($type == 'google'){
+                $url = "https://keoswalletapi.luminousdemo.com/api/google-generate-pass";
+            }else if($type == 'apple'){
+                $url = "https://keoswalletapi.luminousdemo.com/api/generate-pass";
+            }else{
+                return "invalide type";
+            }
+
+            $response = Http::post($url,$dataArray);
+
+            if ($response->ok()){
+                return back()->with('tempalte-create','Template Create Successfully');
+            }
+        }catch (e){
+            return e;
+        }
+    }
+
+    public function userTemplateDetails()
+    {
+        $memberId = request()->memberId;
+        $member = SpinPoint::where('member_id',$memberId)->first();
+
+
+        try {
+            $response = Http::post('https://keoswalletapi.luminousdemo.com/api/download-pass-by-loyalty-user',[
+                "pass_type" => $member->template_pass_type,
+                "pass_id" => $member->template_id
+            ]);
+
+            if ($response->successful()) {
+                $content = $response->body();
+                $filename = '';
+
+                if ($member->template_pass_type == 'apple') {
+                    $filename = Str::random(7) . $memberId . '.pkpass';
+                    $content_type = 'application/vnd.apple.pkpass';
+                } elseif ($member->template_pass_type == 'google') {
+                    $filename = Str::random(7) . $memberId . '.gpass';
+                    $content_type = 'application/vnd.google.pass';
+                } else {
+                    return response()->json(['error' => 'Unsupported pass type'], 400);
+                }
+
+                $headers = [
+                    'Content-Type' => $content_type,
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                ];
+
+
+                return response($content, 200, $headers);
+                //return back();
+            } else {
+                return response()->json(['error' => 'Failed to download .pkpass file'], 500);
+            }
+        }catch (e){
+            return e;
+        }
+
+        return $member;
+    }
+
+    public function getTemplateInfo(Request $request)
+    {
+        $templateId = $request->input('template_id');
+        $passType = $request->input('pass_type');
+
+        try {
+            $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-data-from-loyalty-for-edit',[
+                "pass_type" => $passType,
+                "pass_id" => $templateId
+            ]);
+
+            if ($response->ok()){
+               return json_decode($response->body());
+            }
+        }catch (e){
+            return e;
+        }
+
+
+        return response()->json([
+            'id' => $templateId,
+            'type' => $passType,
+        ]);
     }
 }

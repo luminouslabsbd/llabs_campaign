@@ -47,6 +47,7 @@ return new class extends Migration
             $table->foreignId('campaign_id')->nullable()->constrained('campaigns')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('member_id')->nullable()->constrained('members')->cascadeOnUpdate()->cascadeOnDelete();
             $table->bigInteger('template_id')->nullable();
+            $table->string('template_pass_type')->nullable();
             $table->foreignId('card_id')->nullable()->constrained('cards')->cascadeOnUpdate()->cascadeOnDelete();
             $table->bigInteger('point')->nullable();
             $table->timestamps();

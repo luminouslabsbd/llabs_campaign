@@ -610,10 +610,10 @@
 
                             <div class="mt-4">
                                 <label for="name" class="input-label">Template</label>
-                                <select class="form-select" required name="template_id" aria-label="Default select example">
+                                <select class="form-select" required name="template_info" aria-label="Default select example">
                                     <option selected>Select Your Template</option>
                                     @foreach ($templates as $template)
-                                        <option {{ $template['id'] == $result['template_id'] ? 'selected' : ''}} value="{{ $template['id'] }}">Template - {{ $template['id'] }}</option>
+                                        <option {{ $template['id'] == $result['template_id'] ? 'selected' : ''}} value="{{$template['id']}}|{{$template['pass_type']}}">Template - {{ $template['id'] }} | Type - {{$template['pass_type']}}</option>
                                     @endforeach
                                 </select>
                             </div>

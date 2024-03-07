@@ -63,6 +63,9 @@
                         <th scope="col" class=" py-3  px-6 whitespace-nowrap">
                             Rewards
                         </th>
+                        <th scope="col" class=" py-3  px-6 whitespace-nowrap">
+                            Download Passkit
+                        </th>
                         {{--<th scope="col" class="px-6 py-3 text-right">
                             Actions
                         </th>--}}
@@ -80,7 +83,9 @@
                                 <td>{{ $member->member->email ?? 'Email' }}</td>
                                 <td>{{ $member->reward ?? '' }}</td>
 
-
+                                <td>
+                                    <a href="{{ route('luminouslabs::partner.template.download',$member->member_id) }}" class="">Download</a>
+                                </td>
                                 {{--                        <td class="px-6 py-4 text-right">--}}
                                 {{--                            <div class="flex flex-nowrap justify-end space-x-2">--}}
                                 {{--                                <div data-tooltip-target="results-tooltip" data-tooltip-placement="top" class="null">--}}

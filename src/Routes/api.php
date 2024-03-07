@@ -26,6 +26,9 @@ Route::prefix('{locale}/v1/ll')->group(function () {
     // Link Share
     Route::post('get/hash-by-tenantid', [LinkShareController::class, 'getHashByTenantID']);
     Route::get('get-whatsapp-link', [LinkShareController::class, 'QrGenerator']);
+
+
+    Route::get('get-whatsapp-link-by-encrypted-id', [LinkShareController::class, 'getWhatsappLinkByEncryptedId']);
     //Get all data after scan
     Route::get('scaned/{hash_id}', [LinkShareController::class, 'QrCodeScaned'])->name('qr-scaned');
 
@@ -41,4 +44,6 @@ Route::prefix('{locale}/v1/ll')->group(function () {
     Route::post('/get-winning-rewards',[LinkShareController::class, 'getWinningRewards']);
 
     Route::post('partner-campaign-members',[LinkShareController::class,'partnerCampaignMembers']);
+
+    Route::post('/get-user-details-by-encripted-id',[LinkShareController::class,'getUserDetailsByEncriptedId']);
 });

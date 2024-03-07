@@ -14,6 +14,7 @@ class CreateHashQrCodeTable extends Migration
     public function up()
     {
         Schema::create('hash_qr_code', function (Blueprint $table) {
+            
             $table->id('id'); // Assuming you want to set id as the primary key
             $table->integer('tenant_id')->nullable();
             $table->integer('campaign_id')->nullable();
