@@ -26,6 +26,9 @@ use Mockery\Exception;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
+
+
+
 class LinkShareController extends Controller
 {
 
