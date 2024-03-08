@@ -14,13 +14,13 @@ class CreateHashQrCodeTable extends Migration
     public function up()
     {
         Schema::create('hash_qr_code', function (Blueprint $table) {
-            
             $table->id('id'); // Assuming you want to set id as the primary key
             $table->integer('tenant_id')->nullable();
             $table->integer('campaign_id')->nullable();
             $table->integer('product_id')->nullable();
             $table->string('purchase_value')->nullable();
             $table->text('hash');
+            $table->string('encript_id')->nullable();
             $table->string('qr_code_path');
             $table->timestamps(); // Add if you want timestamps (created_at, updated_at)
         });

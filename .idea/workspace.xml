@@ -39,7 +39,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "/home/ll/Project/laravel/Package/llabs_campaign_old",
+    "last_opened_file_path": "/home/ll/Project/laravel/Package/llabs_campaign",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -56,7 +56,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-ba97393d7c68-6f8e3395a2b4-com.jetbrains.php.sharedIndexes-PS-233.14015.96" />
+        <option value="bundled-php-predefined-ba97393d7c68-6f8e3395a2b4-com.jetbrains.php.sharedIndexes-PS-233.14475.35" />
       </set>
     </attachedChunks>
   </component>
@@ -70,6 +70,7 @@
       <updated>1707903163610</updated>
       <workItem from="1707903165111" duration="633000" />
       <workItem from="1707903812545" duration="1456000" />
+      <workItem from="1709805243716" duration="1600000" />
     </task>
     <servers />
   </component>

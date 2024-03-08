@@ -195,6 +195,23 @@
             object-fit: cover;
         }
 
+        #barcode-img.qr{
+            border-radius: 5px;
+            height: 135px;
+            margin-top: 24px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        
+        #barcode-img.aztec{
+            border-radius: 5px;
+            height: 90px;
+            max-width: 375px;
+            margin-top: 24px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
         @media (min-width: 640px) {
             .sm\:items-end {
                 align-items: flex-end;
@@ -471,6 +488,35 @@
                                            class="border border-gray-300 text-sm rounded-lg block w-full p-2.5"
                                            placeholder="">
                                 </div>
+
+                                <div class="mt-4">
+                                    <label for="select-google-barcode" class="input-label">Select Format</label>
+                                    <select class="form-select" id="select-google-barcode" name=""
+                                            aria-label="Default select example">
+                                        <option selected value="QR_CODE">QR CODE</option>
+                                        <option value="AZTEC">AZTEC</option>
+                                        <option value="CODE_128">CODE 128</option>
+                                        <option value="PDF_417">PDF 417</option>
+                                    </select>
+                                </div>
+
+                                <div class="mt-4">
+                                    <label for="select-apple-barcode" class="input-label">Select Format</label>
+                                    <select class="form-select" id="select-apple-barcode" name=""
+                                            aria-label="Default select example">
+                                        <option selected value="PKBarcodeFormatQR">QR CODE</option>
+                                        <option value="PKBarcodeFormatPDF417">PDF 417</option>
+                                        <option value="PKBarcodeFormatAztec">AZTEC</option>
+                                        <option value="PKBarcodeFormatCode128">CODE 128</option>
+                                    </select>
+                                </div>
+
+                                <div class="mt-4">
+                                    <label class="input-label" contenteditable="true">Value</label>
+                                    <input type="text" id="barcode-value" name=""
+                                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                           placeholder="" x-bind:type="input">
+                                </div>
                             </div>
                         </div>
 
@@ -566,7 +612,7 @@
                 $("#templateSelector").hide();
             });
 
-            // showInputs(selectedWallet, selectedCard);
+            showInputs(selectedWallet, selectedCard);
 
             $("#wallet").on("change", function() {
                 selectedWallet = $(this).val();
@@ -603,7 +649,7 @@
                                     </div>
 
                                     <div class="">
-                                        <label class="input-label" contenteditable="true">Last Name</label>
+                                        <label class="input-label" contenteditable="true">Expiry Date</label>
                                         <input type="text" id="first-row-second-element" name="first-row-second-element"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                             placeholder="" x-bind:type="input">
@@ -703,6 +749,11 @@
 
                         $("#card-name").parent("div").hide();
                         $("#nameText").text("");
+                        $("#select-google-barcode").parent("div").show();
+                        $("#select-apple-barcode").parent("div").hide();
+
+                        // show qr code
+                        handleBarcodeChange($("#select-google-barcode").val(), $(".google-card"));
 
                     } else {
                         $(".google-card").remove();
@@ -863,9 +914,14 @@
                     } else {
                         $(".apple-member-card, .apple-store-or-coupon-card").remove();
                     }
+
+                    $("#select-apple-barcode").parent("div").show();
+                    $("#select-google-barcode").parent("div").hide();
+
+                    // show qr code
+                    handleBarcodeChange($("#select-apple-barcode").val(), $(".apple-store-or-coupon-card, .apple-member-card"));
                 }
             }
-
 
             // save wallet and card data
             $("#save-wallet-data").on("click", function() {
@@ -912,6 +968,8 @@
                         labelColorVal: $("#label-color").val(),
                         uploadedLogo: logoImageFile.startsWith('data:image') ? logoImageFile : "",
                         upladedHeroImg: heroImageFile.startsWith('data:image') ? heroImageFile : "",
+                        barcodeFormat: $("#select-google-barcode").val(),
+                        barcodeValue: $("#barcode-value").val(),
                     };
                 } else if (selectedWallet == 1) {
                     if ((selectedCard == 0) || (selectedCard == 2)) {
@@ -937,7 +995,9 @@
                             labelColorLabel: $("#label-color").prev().text(),
                             labelColorVal: $("#label-color").val(),
                             uploadedLogo: logoImageFile.startsWith('data:image') ? logoImageFile : "",
-                            upladedHeroImg: heroImageFile.startsWith('data:image') ? heroImageFile : ""
+                            upladedHeroImg: heroImageFile.startsWith('data:image') ? heroImageFile : "",
+                            barcodeFormat: $("#select-apple-barcode").val(),
+                            barcodeValue: $("#barcode-value").val(),
                         };
                     } else if (selectedCard == 1) {
                         dataObj = {};
@@ -970,14 +1030,17 @@
                             labelColorLabel: $("#label-color").prev().text(),
                             labelColorVal: $("#label-color").val(),
                             uploadedLogo: logoImageFile.startsWith('data:image') ? logoImageFile : "",
-                            upladedHeroImg: heroImageFile.startsWith('data:image') ? heroImageFile : ""
-
+                            upladedHeroImg: heroImageFile.startsWith('data:image') ? heroImageFile : "",
+                            barcodeFormat: $("#select-apple-barcode").val(),
+                            barcodeValue: $("#barcode-value").val(),
                         };
                     }
                 }
 
                 // pass the data to textarea
                 $('#wallet_obj').val(JSON.stringify(dataObj));
+
+                console.log(dataObj);
             });
 
             // change background color
@@ -1032,7 +1095,7 @@
                     success: function(response) {
                         // Handle the response data here
                         $('#template_response_obj').val(JSON.stringify(response));
-
+                        
                         const parsedData = JSON.parse(response.pass_data);
                         const passType = response.pass_type;
                         const activeCardName = passType == "google" ? parsedData.passDetails.activeCardName : Object.keys(parsedData)[0];
@@ -1187,8 +1250,18 @@
                             $(".ll-user-add-form img, #nameText, .user-filled-field label, .first-row, .second-row, .third-row, .fourth-row").css('color', parsedData?.passDetails?.labelColor);
                             $("#background-color").val(parsedData?.passDetails?.color);
                             $("#label-color").val(parsedData?.passDetails?.labelColor);
+
+                            // set image
+                            $("#logo-image").attr("src", parsedData?.passDetails?.logoImage ? parsedData?.passDetails?.logoImage : logoImageFile);
+                            $("#hero-image").attr("src", parsedData?.passDetails?.heroImage ? parsedData?.passDetails?.heroImage : heroImageFile);
+
+                            // set barcode image
+                            handleBarcodeChange(parsedData?.passDetails?.formate, $(".google-card"));
+                            formatBarcodeSelect(parsedData?.passDetails?.formate, selectedWallet);
+                            $("#barcode-value").val(parsedData?.passDetails?.barcodeValue);
                         } else{
                             let appleData = selectedCard == 0 ? parsedData.StoreCard : (selectedCard == 1 ? parsedData.GenericPass : parsedData.Coupon);
+
                             if (selectedCard == 0 || selectedCard == 2) {
                                 let appleSecondaryFormData = selectedCard == 0 ? parsedData.StoreCard.secondaryFormsData : parsedData.Coupon.secondaryFormsData;
                                 // let appleData = selectedCard == 0 ? parsedData.StoreCard : parsedData.Coupon;
@@ -1331,6 +1404,14 @@
                             $("#background-color").val(appleBgHexColorValue);
                             $("#label-color").val(appleLabelHexColorValue);
 
+                            // set image
+                            $("#logo-image").attr("src", appleData?.passDetails?.logoImage ? appleData?.passDetails?.logoImage : logoImageFile);
+                            $("#hero-image").attr("src", appleData?.passDetails?.heroImage ? appleData?.passDetails?.heroImage : heroImageFile);
+
+                            // set barcode image
+                            handleBarcodeChange(appleData?.passDetails?.formate, $(".apple-store-or-coupon-card, .apple-member-card"));
+                            formatBarcodeSelect(appleData?.passDetails?.formate, selectedWallet);
+                            $("#barcode-value").val(appleData?.passDetails?.barcodeValue);
                         }
                     },
                     error: function(xhr, status, error) {
@@ -1383,6 +1464,108 @@
 
                 reader.readAsDataURL(file);
             }
+
+            // handle barcode change
+            function handleBarcodeChange(barcodeFormat, imgParentElement) {
+                switch (barcodeFormat) {
+                    // apple barcode
+                    case "PKBarcodeFormatQR":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode1.svg') }}' class='qr' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    case "PKBarcodeFormatPDF417":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode3.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    case "PKBarcodeFormatAztec":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode2.svg') }}' class='qr' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    case "PKBarcodeFormatCode128":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode4.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    // google barcode
+                    case "QR_CODE":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode1.svg') }}' class='qr' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    case "AZTEC":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode2.svg') }}' class='qr' id='barcode-img' alt='barcode'></div>");
+                        break;
+
+                    case "CODE_128":
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode4.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
+                        break;
+                
+                    default:
+                        $("#barcode-img").remove();
+                        imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode3.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
+                        break;
+                }
+            }
+
+            // handle format select
+            function formatBarcodeSelect(barcodeFormat, walletType) {
+                if (walletType == 0) {
+                    switch (barcodeFormat) {
+                        // google barcode
+                        case "QR_CODE":
+                            $("#select-apple-barcode").val("QR_CODE");
+                            break;
+
+                        case "AZTEC":
+                            $("#select-apple-barcode").val("AZTEC");
+                            break;
+
+                        case "CODE_128":
+                            $("#select-apple-barcode").val("CODE_128");
+                            break;
+                    
+                        default:
+                            $("#select-apple-barcode").val("PDF_417");
+                            break;
+                    }
+                } else {
+                    switch (barcodeFormat) {
+                        // apple barcode
+                        case "PKBarcodeFormatQR":
+                            $("#select-google-barcode").val("PKBarcodeFormatQR");
+                            break;
+
+                        case "PKBarcodeFormatPDF417":
+                            $("#select-google-barcode").val("PKBarcodeFormatPDF417");
+                            break;
+
+                        case "PKBarcodeFormatAztec":
+                            $("#select-google-barcode").val("PKBarcodeFormatAztec");
+                            break;
+
+                        default:
+                            $("#select-google-barcode").val("PKBarcodeFormatCode128");
+                            break;
+                    }
+                }
+            }
+
+            $("#select-google-barcode").on("change", function() {
+                const barcodeFormat = $(this).val();
+
+                handleBarcodeChange(barcodeFormat, $(".google-card"));
+            });
+
+            $("#select-apple-barcode").on("change", function() {
+                const barcodeFormat = $(this).val();
+
+                handleBarcodeChange(barcodeFormat, $(".apple-store-or-coupon-card, .apple-member-card"));
+            });
         });
     </script>
 @stop

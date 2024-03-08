@@ -176,6 +176,9 @@ class CampainController extends Controller
                $pass_data->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->passDetails->logoImage;
                $pass_data->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->passDetails->heroImage;
 
+               $pass_data->passDetails->formate = $wallet_data->barcodeFormat ?? $pass_data->passDetails->formate;
+               $pass_data->passDetails->barcodeValue = $wallet_data->barcodeValue ?? $pass_data->passDetails->barcodeValue;
+
                if ($google_pass_data->firstRowData){
                    //return "Esist First";
                    foreach ($google_pass_data->firstRowData as $key => $value){
@@ -256,9 +259,12 @@ class CampainController extends Controller
                    $pass_data->Coupon->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->Coupon->passDetails->logoImage;
                    $pass_data->Coupon->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->Coupon->passDetails->heroImage;
 
-                   $pass_data->Coupon->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal);
-                   $pass_data->Coupon->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal);
-                   $pass_data->Coupon->passDetails->cardTitle = $wallet_data->cardNameVal;
+                   $pass_data->Coupon->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal) ?? $pass_data->Coupon->passDetails->color;
+                   $pass_data->Coupon->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal) ?? $pass_data->Coupon->passDetails->labelColor;
+                   $pass_data->Coupon->passDetails->cardTitle = $wallet_data->cardNameVal ?? $pass_data->Coupon->passDetails->cardTitle;
+
+                   $pass_data->Coupon->passDetails->formate = $wallet_data->barcodeFormat ?? $pass_data->Coupon->passDetails->formate;
+                   $pass_data->Coupon->passDetails->barcodeValue = $wallet_data->barcodeValue ?? $pass_data->Coupon->passDetails->barcodeValue;
 
                    if ($pass_data->Coupon->secondaryFormsData){
                        foreach ($pass_data->Coupon->secondaryFormsData as $key => $value){
@@ -279,9 +285,12 @@ class CampainController extends Controller
                }else if($wallet_data->cardType == 1){
                    $pass_data->GenericPass->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->GenericPass->passDetails->logoImage;
                    $pass_data->GenericPass->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->GenericPass->passDetails->heroImage;
-                   $pass_data->GenericPass->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal);
-                   $pass_data->GenericPass->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal);
-                   $pass_data->GenericPass->passDetails->cardTitle = $wallet_data->cardNameVal;
+                   $pass_data->GenericPass->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal) ?? $pass_data->GenericPass->passDetails->color;
+                   $pass_data->GenericPass->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal) ?? $pass_data->GenericPass->passDetails->labelColor;
+                   $pass_data->GenericPass->passDetails->cardTitle = $wallet_data->cardNameVal ?? $pass_data->GenericPass->passDetails->cardTitle;
+
+                   $pass_data->GenericPass->passDetails->formate = $wallet_data->barcodeFormat ?? $pass_data->GenericPass->passDetails->formate;
+                   $pass_data->GenericPass->passDetails->barcodeValue = $wallet_data->barcodeValue ?? $pass_data->GenericPass->passDetails->barcodeValue;
 
                    if ($pass_data->GenericPass->primaryFormsData){
                        $pass_data->GenericPass->primaryFormsData->label->value  = $wallet_data->firstRowFirstElementLabel;
@@ -352,6 +361,7 @@ class CampainController extends Controller
                }else{
                    return "invalide type";
                }
+
                $response = Http::post($url,$passFormatedData);
                $responseData = json_decode($response, true);
                //return $responseData;
