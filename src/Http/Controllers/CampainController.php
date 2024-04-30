@@ -102,15 +102,20 @@ class CampainController extends Controller
             return redirect()->route('partner.data.list',['name' => 'cards'])->with("message","You doesn't have any Loyalty Loyalty card.So Please create a card and try again" );
         }
 
-       $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
-
-       if ($response->successful()) {
-            $templates = $response->json();
-            return view('luminouslabs::form', compact('cards','templates'));
-        } else {
-            return "fail to fetch";
-            return back()->withErrors(['error' => 'Failed to fetch templates']);
+        try {
+            $response = Http::get('https://keoswalletapi.luminousdemo.com/api/get-partner-template-for-user/'.$user->email);
+            if ($response->successful()) {
+                $templates = $response->json();
+                return view('luminouslabs::form', compact('cards','templates'));
+            } else {
+                return "fail to fetch";
+                return back()->withErrors(['error' => 'Failed to fetch templates']);
+            }
+        }catch (Exception $exception){
+            return "keos wall api fetching error".$exception;
         }
+
+
 
         //return view('luminouslabs::form', compact('cards','tempaltes'));
     }
@@ -118,15 +123,12 @@ class CampainController extends Controller
 
     public function store(Request $request)
     {
+
         $userid = auth('partner')->user()->id;
         $decotedTempalteResponse = json_decode($request->template_response_obj);
         $pass_data =  json_decode($decotedTempalteResponse->pass_data ?? null);
-
         $wallet_data = json_decode($request->wallet_obj);
         $responseData = null;
-
-
-        $wallet_data = json_decode($request->wallet_obj);
         $rules = [
             'name' => 'required|string|max:255',
             'card_id' => 'required|numeric', // Adjust this rule based on your requirements
@@ -151,13 +153,20 @@ class CampainController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        if (empty($decotedTempalteResponse) && empty($wallet_data)){
+            return redirect()->back()->with('template_validate','Please select or add a template');
+        }
+
         //Campagin Validation
        if (isset($decotedTempalteResponse)){
            $google_pass_data = $pass_data->textModulesData ?? null;
            if ($wallet_data->waletType == 0){
                $pass_data->passDetails->passId = $decotedTempalteResponse->id ?? null;
            }else if($wallet_data->waletType == 1){
-               if ($wallet_data->cardType == 0 || $wallet_data->cardType == 2){
+               if ($wallet_data->cardType == 0){
+                   $pass_data->StoreCard->passDetails->passId = $decotedTempalteResponse->id ?? null;
+               }else if ($wallet_data->cardType == 2){
                    $pass_data->Coupon->passDetails->passId = $decotedTempalteResponse->id ?? null;
                }else if($wallet_data->cardType == 1){
                    $pass_data->GenericPass->passDetails->passId = $decotedTempalteResponse->id ?? null;
@@ -253,9 +262,34 @@ class CampainController extends Controller
                    }
                }
            }else if($wallet_data->waletType == 1){
-               if ($wallet_data->cardType == 0 || $wallet_data->cardType == 2){
+               if ($wallet_data->cardType == 0){
+                   $pass_data->StoreCard->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->StoreCard->passDetails->logoImage;
+                   $pass_data->StoreCard->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->StoreCard->passDetails->heroImage;
 
+                   $pass_data->StoreCard->passDetails->color = hexeToRgb($wallet_data->backgroundColorVal) ?? $pass_data->StoreCard->passDetails->color;
+                   $pass_data->StoreCard->passDetails->labelColor = hexeToRgb($wallet_data->labelColorVal) ?? $pass_data->StoreCard->passDetails->labelColor;
+                   $pass_data->StoreCard->passDetails->cardTitle = $wallet_data->cardNameVal ?? $pass_data->StoreCard->passDetails->cardTitle;
 
+                   $pass_data->StoreCard->passDetails->formate = $wallet_data->barcodeFormat ?? $pass_data->StoreCard->passDetails->formate;
+                   $pass_data->StoreCard->passDetails->barcodeValue = $wallet_data->barcodeValue ?? $pass_data->StoreCard->passDetails->barcodeValue;
+
+                   if ($pass_data->StoreCard->secondaryFormsData){
+                       foreach ($pass_data->StoreCard->secondaryFormsData as $key => $value){
+                           if ($key == 0 && isset($value)){
+                               $value->label->value = $wallet_data->firstRowFirstElementLabel ;
+                               $value->displayValue->value = $wallet_data->firstRowFirstElementVal ;
+                           }else if ($key == 1 && isset($value)){
+                               $value->label->value = $wallet_data->firstRowSecondElementLabel ;
+                               $value->displayValue->value = $wallet_data->firstRowSecondElementVal ;
+                           }else{
+                               if ($value){
+                                   $value->label->value = $wallet_data->firstRowThirdElementLabel ;
+                                   $value->displayValue->value = $wallet_data->firstRowThirdElementVal ;
+                               }
+                           }
+                       }
+                   }
+               }else if($wallet_data->cardType == 2){
                    $pass_data->Coupon->passDetails->logoImage = $wallet_data->uploadedLogo ?? $pass_data->Coupon->passDetails->logoImage;
                    $pass_data->Coupon->passDetails->heroImage = $wallet_data->upladedHeroImg ?? $pass_data->Coupon->passDetails->heroImage;
 
@@ -352,7 +386,9 @@ class CampainController extends Controller
            }
        }
        else{
+
            $passFormatedData = $this->passKitDataProvider->getFormate($wallet_data);
+           //return $passFormatedData;
            try {
                if ($wallet_data->waletType == 0){
                    $url = "https://keoswalletapi.luminousdemo.com/api/google-generate-pass/loyalty";
@@ -384,6 +420,8 @@ class CampainController extends Controller
         $pass_type = $updatedTemplateType ?? $template_parts[1] ?? null;
         return $template_id;
         exit();*/
+
+        //return $responseData;
 
         $campagin = Campaign::create([
             'name' => $request->name,

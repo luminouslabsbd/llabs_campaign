@@ -202,7 +202,7 @@
             margin-right: auto;
             margin-left: auto;
         }
-        
+
         #barcode-img.aztec{
             border-radius: 5px;
             height: 90px;
@@ -219,12 +219,10 @@
         }
     </style>
     <section class="">
-
         <section class="">
             <div class="w-full">
                 <div class="relative p-4 lg:p-6">
                     <div class="mb-3">
-
                         <div class="w-full flex flex-row items-center justify-between">
                             <div class="mb-5">
                                 <a href="{{ route('luminouslabs::partner.campain.manage') }}"
@@ -302,11 +300,13 @@
                                                 {{ $template['id'] }} | Type - {{ $template['pass_type'] }}</option>
                                         @endforeach
                                     </select>
-
                                     <!-- Button trigger modal -->
                                     <button type="button" class="btn btn-primary template-add-icon"
                                             id="template-add-icon">+</button>
                                 </div>
+                                @if(session()->has('template_validate'))
+                                    <small style="color: red;">{{ session()->get('template_validate') }}</small>
+                                @endif
                             </div>
 
                             <div class="mt-4">
@@ -351,11 +351,11 @@
 
                         <div class="spinner-form-wrapper">
                             <div class="title">
-                                <h4 class="" style="color: white;">Spinner Settings</h4>
+                                <h4 class="text-dark" style="color: white;">Spinner Settings</h4>
                                 <button type="button" id="add-input">+ Add Input</button>
                             </div>
                             <div
-                                class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
+                                class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row mt-3">
                                 <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
                                         <span class=" text-gray-700">Label Title</span>
@@ -370,8 +370,8 @@
                                 </div>
                                 <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Label Color</span>
-                                        <input type="color" name="label_color[]" class="rounded form-input" />
+                                        <span class=" text-gray-700 mb-2">Label Color</span>
+                                        <input type="color" name="label_color[]" class="rounded form-input mb-2" />
                                     </label>
                                 </div>
                                 <div class="w-full sm:w-1/12">
@@ -388,8 +388,8 @@
                                 </div>
                                 <div class="w-full sm:w-2/12">
                                     <label class="flex flex-col gap-2">
-                                        <span class=" text-gray-700">Is wining label</span>
-                                        <input type="checkbox" name="is_wining_label[0]" class="rounded" />
+                                        <span class=" text-gray-700 mb-2">Is wining label</span>
+                                        <input class="mb-3 rounded" type="checkbox" name="is_wining_label[0]" />
                                     </label>
                                 </div>
                                 <button type="button" style="margin-bottom: 0px"
@@ -542,38 +542,38 @@
                     <div class=" flex flex-wrap items-stretch sm:items-end justify-start sm:justify-between gap-3 sm:gap-0 flex-col sm:flex-row">
                         <div class="w-full sm:w-2/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Label Title</span>
+<!--                                <span class=" text-gray-700">Label Title</span>-->
                                 <input type="text" name="label_title[]" class=" form-input rounded" />
                             </label>
                         </div>
                         <div class="w-full sm:w-2/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Label Value</span>
+<!--                                <span class=" text-gray-700">Label Value</span>-->
                                 <input type="text" name="label_value[]" class="form-input rounded" />
                             </label>
                         </div>
                         <div class="w-full sm:w-2/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Label Color</span>
-                                <input type="color" name="label_color[]" class="rounded form-input" />
+<!--                                <span class=" text-gray-700">Label Color</span>-->
+                                <input type="color" name="label_color[]" class="rounded form-input mb-2" />
                             </label>
                         </div>
                         <div class="w-full sm:w-1/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Init prize</span>
+<!--                                <span class=" text-gray-700">Init prize</span>-->
                                 <input type="number" name="init_prize[${index}]" class="rounded form-input" />
                             </label>
                         </div>
                         <div class="w-full sm:w-1/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Available prize</span>
+<!--                                <span class=" text-gray-700">Available prize</span>-->
                                 <input type="number" name="available_prize[${index}]" class="rounded form-input" />
                             </label>
                         </div>
                         <div class="w-full sm:w-2/12">
                             <label class="flex flex-col gap-2">
-                                <span class=" text-gray-700">Is wining label</span>
-                                <input type="checkbox" name="is_wining_label[${index}]" class="rounded" />
+<!--                                <span class=" text-gray-700">Is wining label</span>-->
+                                <input class="mb-3 rounded" type="checkbox" name="is_wining_label[${index}]" class="rounded" />
                             </label>
                         </div>
                         <button type="button" style="margin-bottom: 0px"
@@ -1095,7 +1095,7 @@
                     success: function(response) {
                         // Handle the response data here
                         $('#template_response_obj').val(JSON.stringify(response));
-                        
+
                         const parsedData = JSON.parse(response.pass_data);
                         const passType = response.pass_type;
                         const activeCardName = passType == "google" ? parsedData.passDetails.activeCardName : Object.keys(parsedData)[0];
@@ -1504,7 +1504,7 @@
                         $("#barcode-img").remove();
                         imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode4.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
                         break;
-                
+
                     default:
                         $("#barcode-img").remove();
                         imgParentElement.append("<div class='text-center w-100'><img src='{{ asset('assets/ll_imgs/barcode3.svg') }}' class='aztec' id='barcode-img' alt='barcode'></div>");
@@ -1528,7 +1528,7 @@
                         case "CODE_128":
                             $("#select-apple-barcode").val("CODE_128");
                             break;
-                    
+
                         default:
                             $("#select-apple-barcode").val("PDF_417");
                             break;

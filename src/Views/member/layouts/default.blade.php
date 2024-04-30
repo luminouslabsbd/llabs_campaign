@@ -162,7 +162,7 @@
                     </div>
                 </div>
             </nav>
-            @auth('partner')
+            {{--@auth('partner')
                 <nav class="hidden md:block bg-gray-100 border-gray-200 dark:bg-gray-700 dark:border-gray-600 border-b">
                     <div class="grid py-4 px-4 mx-auto max-w-screen-2xl lg:grid-cols-2 md:px-6">
 
@@ -224,7 +224,7 @@
                         </div>
                     </div>
                 </nav>
-            @endauth
+            @endauth--}}
         </header>
 
         {{-- @auth('partner')
@@ -278,7 +278,7 @@
 
         <div class="w-full mx-auto flex flex-grow">
             <div class="w-full">
-                @auth('partner')
+                {{--@auth('partner')
                     <aside id="ll-sidebar"
                         class="fixed top-[56px] left-0 z-10 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
                         aria-label="Sidebar">
@@ -362,7 +362,8 @@
                             </ul>
                         </div>
                     </aside>
-                @endauth
+                @endauth--}}
+
                 <div class="sm:ml-64 ll-amdin-content-container ll-partner-content-container">
                     @yield('content')
                 </div>

@@ -46,4 +46,14 @@ Route::prefix('{locale}/v1/ll')->group(function () {
     Route::post('partner-campaign-members',[LinkShareController::class,'partnerCampaignMembers']);
 
     Route::post('/get-user-details-by-encripted-id',[LinkShareController::class,'getUserDetailsByEncriptedId']);
+
+
+
+
+
+    //CRM Partner Api
+    Route::get('/crm/partner-campaign',[LinkShareController::class,'partnerCampaign']);
+    Route::get('/crm/get-partner',[LinkShareController::class,'getPartners']);
+    Route::get('/crm/get-partner/{id}',[LinkShareController::class,'getPartner']);
+
 });

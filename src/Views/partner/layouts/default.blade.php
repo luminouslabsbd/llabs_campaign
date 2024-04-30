@@ -264,7 +264,7 @@ $routeDataDefinition = (isset($dataDefinition)) ? $dataDefinition->name : null;
                                 </li>
 
                                 <li>
-                                    <a class="ll-sidebar-link flex items-center p-2 group @if ($routeDataDefinition == 'members') active @endif" href="{{ route('partner.data.list', ['name' => 'members']) }}"><x-ui.icon icon="user-group" class="" /><span class="ml-2">{{ trans('common.members') }}</span></a>
+                                    <a class="ll-sidebar-link flex items-center p-2 group @if ($routeDataDefinition == 'members') active @endif" href="{{ route('luminouslabs::partner.members.manage') }}"><x-ui.icon icon="user-group" class="" /><span class="ml-2">{{ trans('common.members') }}</span></a>
                                 </li>
 
                                 <li>
@@ -273,10 +273,6 @@ $routeDataDefinition = (isset($dataDefinition)) ? $dataDefinition->name : null;
 
                                 <li>
                                     <a class="ll-sidebar-link flex items-center p-2 group @if (Str::startsWith($routeName, 'luminouslabs::partner.campain.manage')) active @endif" href="{{ route('luminouslabs::partner.campain.manage') }}"><x-ui.icon icon="pencil-square" class="" /><span class="ml-2">Campaign Manage</span></a>
-                                </li>
-
-                                <li>
-                                    <a class="ll-sidebar-link flex items-center p-2 group @if (Str::startsWith($routeName, 'luminouslabs::partner.campain.manage')) active @endif" href="{{ route('luminouslabs::partner.campain.manage') }}"><x-ui.icon icon="pencil-square" class="" /><span class="ml-2">Create Template</span></a>
                                 </li>
 
                                 <li>

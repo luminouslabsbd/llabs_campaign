@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Luminouslabs\Installer\Http\Controllers\AdminDashBoardController;
 use Luminouslabs\Installer\Http\Controllers\CampainController;
+use Luminouslabs\Installer\Http\Controllers\PartnerController;
 use Luminouslabs\Installer\Http\Controllers\MemberDashBoardController;
 use Luminouslabs\Installer\Http\Controllers\PartnerDashBoardController;
 use Luminouslabs\Installer\Http\Controllers\RocketChatController;
@@ -39,9 +40,8 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as
     Route::post('/template-store',[CampainController::class,'templateStore'])->name('partner.template.store');
 
     Route::post('/get-template-info', [CampainController::class,'getTemplateInfo'])->name('partner.template.templateinfo');
-
     Route::get('/user-template-details/{memberId}',[CampainController::class,'userTemplateDetails'])->name('partner.template.download');
-});
+   });
 
 //admin rocket chat setting routes
 Route::group(['prefix' => '{locale}/admin', 'middleware' => ['web']], function () {
@@ -53,7 +53,6 @@ Route::group(['prefix' => '{locale}/admin', 'middleware' => ['web']], function (
 });
 
 Route::group(['prefix' => '{locale}/api/ll/v1', 'as' => 'luminouslabs::'], function () {
-
     Route::get('get-campain-spiner-data', [CampainController::class, 'getSpinarData']);
 });
 
@@ -73,6 +72,12 @@ Route::group(['prefix' => '{locale}/partner/ll/v1', 'middleware' => ['web'], 'as
 Route::group(['prefix' => '{locale}/member/ll/v1', 'middleware' => ['web'], 'as' => 'luminouslabs::'], function () {
     Route::get('get-dashboard-card-count', [MemberDashBoardController::class, 'getDashboardCardCount'])->name('member.getDashboardCardCount');
     Route::get('/seven-days-data', [MemberDashBoardController::class, 'getLastSevenDaysData'])->name('member.getLastSevenDaysData');
+
+    //Manage Member For Partners
+    Route::get('get-pertner-members',[PartnerController::class,'getPartnerMembers'])->name('partner.member.manage');
+    Route::get('/login-as-a-member/{member_id}',[PartnerController::class,'loginAsAMember'])->name('partner.member.login');
+    Route::get('/member-passkit',[PartnerController::class,'memberPasskits'])->name('member.passkits');
+    Route::get('/download-passkit-template/{template_id}/{template_type}',[PartnerController::class,'downloadPasskitTemplate'])->name('download-passkit-template');
 });
 
 // Staff

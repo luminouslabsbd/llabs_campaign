@@ -604,8 +604,83 @@ class ApplePassService
                 "id" => "3388000000022308850",
                 "classId" => "3388000000022308850"
             ];
-        }elseif ($fromData->waletType == 1){
-            if ($cardName == "StoreCard" || $cardName == "Coupon"){
+        }
+        elseif ($fromData->waletType == 1){
+            if ($cardName == "StoreCard"){
+                $data = [
+                    "StoreCard" => [
+                        "secondaryFormsData" => [
+                            [
+                                "id" => 6,
+                                "label" => [
+                                    "label" => "Label",
+                                    "value" => $fromData->firstRowFirstElementLabel ?? "First Name",
+                                    "baseValue" => "First Name"
+                                ],
+                                "displayValue" => [
+                                    "label" => "Display Value",
+                                    "value" => $fromData->firstRowFirstElementVal ?? "putar1"
+                                ]
+                            ],
+                            [
+                                "id" => 9,
+                                "label" => [
+                                    "label" => "Label",
+                                    "value" => $fromData->firstRowSecondElementLabel ?? "Last Name",
+                                    "baseValue" => "Last Name"
+                                ],
+                                "displayValue" => [
+                                    "label" => "Display Value",
+                                    "value" => $fromData->firstRowSecondElementVal ?? "purta2"
+                                ]
+                            ],
+                            [
+                                "id" => 13,
+                                "label" => [
+                                    "label" => "Label",
+                                    "value" => $fromData->firstRowThirdElementLabel ?? "Mobile Number",
+                                    "baseValue" => "Mobile Number"
+                                ],
+                                "displayValue" => [
+                                    "label" => "Display Value",
+                                    "value" => $fromData->firstRowThirdElementVal ?? "9083452345234"
+                                ]
+                            ]
+                        ],
+                        "userId" => $userId,
+                        "passDetails" => [
+                            "logoImage" => $fromData->uploadedLogo ??  "",
+                            "heroImage" => $fromData->upladedHeroImg ?? "",
+                            "color" => hexeToRgb($fromData->backgroundColorVal) ?? "rgb(47, 15, 15)",
+                            "labelColor" => hexeToRgb($fromData->labelColorVal) ?? "rgb(255, 255, 255)",
+                            "formate" => $fromData->barcodeFormat ?? "PKBarcodeFormatQR",
+                            "barcodeValue" => $fromData->barcodeValue ?? "",
+                            "passTypeIdentifier" => "",
+                            "passId" => "",
+                            "header" => "My Organization",
+                            "cardTitle" => $fromData->cardNameVal ?? "My Loyalty Card"
+                        ],
+                        "headerFields" => [
+                           "points"=> [
+                               "id" => 16,
+                                "label"=>[
+                                    "label"=> "Label",
+                                    "value"=> $fromData->cardNameLabel ?? "Points",
+                                    "baseValue"=> "Points"
+                                ],
+                                "displayValue"=> [
+                                    "label"=> "Display Value",
+                                    "value"=> $fromData->cardNameVal ?? "100"
+                                ]
+                           ],
+                        ],
+                        "backFields" => [],
+                        "primaryFormsData" => [],
+                        "auxiliaryFormsData" => []
+                    ]
+                ];
+            }
+            else if($cardName == "Coupon"){
                 $data = [
                     "Coupon" => [
                         "secondaryFormsData" => [
@@ -668,11 +743,11 @@ class ApplePassService
                                 ],
                                 "displayValue" => [
                                     "label" => "Date Format",
-                                    "value" => "2024-03-14T10:00:46+06:00"
+                                    "value" => $fromData->cardNameVal ?? ""
                                 ],
                                 "label" => [
                                     "label" => "Label",
-                                    "value" => "Expiry Date",
+                                    "value" => $fromData->cardNameLabel ?? "Expiry Date",
                                     "baseValue" => "Expiry Date"
                                 ]
                             ]
@@ -740,11 +815,11 @@ class ApplePassService
                             "points" => [
                                 "label" => [
                                     "label" => "Label",
-                                    "value" => "Points"
+                                    "value" => $fromData->cardNameLabel ?? "Points"
                                 ],
                                 "displayValue" => [
                                     "label" => "Display Value",
-                                    "value" => "100"
+                                    "value" => $fromData->cardNameVal ?? "100"
                                 ]
                             ]
                         ],
